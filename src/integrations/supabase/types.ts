@@ -14,7 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      founder_profiles: {
+        Row: {
+          created_at: string
+          deck_url: string | null
+          github: string | null
+          headline: string
+          id: string
+          linkedin: string | null
+          name: string
+          published: boolean
+          scores: Json
+          site: string | null
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deck_url?: string | null
+          github?: string | null
+          headline?: string
+          id?: string
+          linkedin?: string | null
+          name?: string
+          published?: boolean
+          scores?: Json
+          site?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deck_url?: string | null
+          github?: string | null
+          headline?: string
+          id?: string
+          linkedin?: string | null
+          name?: string
+          published?: boolean
+          scores?: Json
+          site?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      founder_signals: {
+        Row: {
+          created_at: string
+          detail: string | null
+          evidence_url: string | null
+          id: string
+          kind: string
+          profile_id: string
+          source: string
+          title: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          evidence_url?: string | null
+          id?: string
+          kind: string
+          profile_id: string
+          source: string
+          title: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          evidence_url?: string | null
+          id?: string
+          kind?: string
+          profile_id?: string
+          source?: string
+          title?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founder_signals_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
