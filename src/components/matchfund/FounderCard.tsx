@@ -1,10 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Github, MapPin, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame, Github, MapPin, Sparkles, Trophy } from "lucide-react";
 import { discoveredSources, type Founder } from "@/data/matchfund";
+import type { MatchScore } from "@/lib/thesis";
 import { ScoreBar } from "./ScoreRing";
 
 
-export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dragOffset?: number }) {
+export function FounderCard({
+  founder,
+  dragOffset = 0,
+  match,
+  hideScore = false,
+}: {
+  founder: Founder;
+  dragOffset?: number;
+  match?: MatchScore;
+  hideScore?: boolean;
+}) {
   const rot = dragOffset * 0.04;
   const tint =
     dragOffset > 40
