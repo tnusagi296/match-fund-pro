@@ -4,14 +4,18 @@ import {
   Bookmark,
   Eye,
   Filter,
+  Github,
   Heart,
+  Linkedin,
   MessageCircle,
   RotateCcw,
+  Trophy,
   X,
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { FounderCard } from "@/components/matchfund/FounderCard";
-import { founders, type Sector, type Stage } from "@/data/matchfund";
+import { discoveredSources, founders, type Sector, type Stage } from "@/data/matchfund";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
