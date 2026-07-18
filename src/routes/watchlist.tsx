@@ -105,7 +105,7 @@ function WatchlistPage() {
                   <td className="p-3 text-right tabular">{f.scores.trust}</td>
                   <td className="p-3 text-xs">
                     <span className="inline-flex items-center gap-1 rounded-full border border-mint/30 bg-mint-soft px-2 py-0.5 text-[10px] text-mint">
-                      <Sparkles className="h-3 w-3" /> {f.topSignal}
+                      <Sparkles className="h-3 w-3" /> {f.matchReason.split("·")[0].trim()}
                     </span>
                   </td>
                   <td className="p-3 text-right">
