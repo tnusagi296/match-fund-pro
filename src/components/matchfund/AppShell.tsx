@@ -2,11 +2,12 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { Bell, Search, Target, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
+// Trimmed to the Hooked loop: Today (Action + Reward), Saved (Investment record),
+// Thesis (Investment input). Everything else is reached from a card.
 const NAV_INVESTOR = [
-  { to: "/", label: "Discover" },
-  { to: "/watchlist", label: "Watchlist" },
-  { to: "/insights", label: "Insights" },
-  { to: "/grants", label: "Programs" },
+  { to: "/", label: "Today" },
+  { to: "/watchlist", label: "Saved" },
+  { to: "/onboard", label: "Thesis" },
 ];
 const NAV_FOUNDER = [
   { to: "/me", label: "My profile" },

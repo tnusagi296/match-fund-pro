@@ -1,76 +1,105 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bookmark,
   Eye,
-  Filter,
   Github,
   Heart,
-  Linkedin,
   MessageCircle,
   RotateCcw,
+  Sparkles,
+  Target,
   Trophy,
   X,
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { FounderCard } from "@/components/matchfund/FounderCard";
-import { discoveredSources, founders, type Sector, type Stage } from "@/data/matchfund";
-
+import { discoveredSources, founders } from "@/data/matchfund";
+import { computeMatch, rankFounders, useThesis, saveThesis } from "@/lib/thesis";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Discover founders — Match Fund" }],
+    meta: [{ title: "Today — Match Fund" }],
   }),
-  component: SwipeDeck,
+  component: TodayDeck,
 });
 
 type Decision = "pass" | "watch" | "shortlist" | "contact";
-const SECTORS: Sector[] = ["AI", "Climate", "Fintech", "Bio", "Devtools", "Robotics", "Consumer"];
-const STAGES: Stage[] = ["Idea", "Hackathon", "Prototype", "Pre-seed", "Seed"];
 
-function SwipeDeck() {
-  const [sectorFilter, setSectorFilter] = useState<Sector[]>([]);
-  const [stageFilter, setStageFilter] = useState<Stage[]>([]);
-  const [hackathonOnly, setHackathonOnly] = useState(false);
-  const [minFit, setMinFit] = useState(0);
+const WATCHLIST_KEY = "matchfund:watchlist";
 
-  const filtered = useMemo(() => {
-    return founders.filter((f) => {
-      if (sectorFilter.length && !sectorFilter.includes(f.sector)) return false;
-      if (stageFilter.length && !stageFilter.includes(f.stage)) return false;
-      if (hackathonOnly && f.signals.hackathonWins === 0) return false;
-      if (f.scores.fit < minFit) return false;
-      return true;
-    });
-  }, [sectorFilter, stageFilter, hackathonOnly, minFit]);
+function TodayDeck() {
+  const navigate = useNavigate();
+  const [thesis, setThesis, hydrated] = useThesis();
+
+  // Hooked · Trigger + Investment: send new investor into onboarding first.
+  useEffect(() => {
+    if (hydrated && !thesis) navigate({ to: "/onboard" });
+  }, [hydrated, thesis, navigate]);
+
+  const ranked = useMemo(() => {
+    if (!thesis) return [];
+    return rankFounders(founders, thesis);
+  }, [thesis]);
 
   const [idx, setIdx] = useState(0);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [drag, setDrag] = useState(0);
   const [exiting, setExiting] = useState<Decision | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const startX = useRef<number | null>(null);
 
-  useEffect(() => setIdx(0), [filtered.length]);
+  useEffect(() => setIdx(0), [ranked.length]);
+  // Reset the reward reveal each time we advance to the next card — the
+  // variable reward has to be earned per swipe, not once per session.
+  useEffect(() => {
+    setRevealed(false);
+  }, [idx]);
 
-  const current = filtered[idx];
-  const next1 = filtered[idx + 1];
-  const next2 = filtered[idx + 2];
+  const current = ranked[idx];
+  const next1 = ranked[idx + 1];
+  const next2 = ranked[idx + 2];
 
   const record = (decision: Decision) => {
     if (!current) return;
-    setDecisions((d) => ({ ...d, [current.id]: decision }));
+    const founderId = current.founder.id;
+    setDecisions((d) => ({ ...d, [founderId]: decision }));
     if (typeof window !== "undefined") {
-      const key = `mf.decisions`;
-      const prev = JSON.parse(window.localStorage.getItem(key) || "{}");
-      prev[current.id] = decision;
-      window.localStorage.setItem(key, JSON.stringify(prev));
+      const prev = JSON.parse(window.localStorage.getItem("mf.decisions") || "{}");
+      prev[founderId] = decision;
+      window.localStorage.setItem("mf.decisions", JSON.stringify(prev));
+      if (decision === "shortlist" || decision === "watch") {
+        const list: string[] = JSON.parse(window.localStorage.getItem(WATCHLIST_KEY) || "[]");
+        if (!list.includes(founderId)) {
+          list.push(founderId);
+          window.localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+        }
+      }
     }
+
+    // Reveal the score with the exit animation — the reward comes AFTER
+    // the action, so the outcome is a surprise, not a filter.
+    setRevealed(true);
     setExiting(decision);
+
+    // Milestone toast at 5 swipes — makes Investment feedback visible.
+    if (thesis) {
+      const nextCount = (thesis.swipeCount ?? 0) + 1;
+      const updated = { ...thesis, swipeCount: nextCount };
+      saveThesis(updated);
+      setThesis(updated);
+      if (nextCount === 5) {
+        setToast("Nice — your match model just got 12% sharper.");
+        setTimeout(() => setToast(null), 3500);
+      }
+    }
+
     setTimeout(() => {
       setIdx((i) => i + 1);
       setDrag(0);
       setExiting(null);
-    }, 260);
+    }, 320);
   };
 
   useEffect(() => {
@@ -82,7 +111,8 @@ function SwipeDeck() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.founder.id]);
 
   const stats = useMemo(() => {
     const values = Object.values(decisions);
@@ -90,46 +120,64 @@ function SwipeDeck() {
       reviewed: values.length,
       shortlisted: values.filter((d) => d === "shortlist").length,
       watched: values.filter((d) => d === "watch").length,
-      contacted: values.filter((d) => d === "contact").length,
     };
   }, [decisions]);
 
-  const toggle = <T,>(arr: T[], v: T, set: (n: T[]) => void) => {
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  const dismissCoachMark = () => {
+    if (thesis) {
+      const updated = { ...thesis, seenCoachMark: true };
+      saveThesis(updated);
+      setThesis(updated);
+    }
   };
+
+  if (!hydrated || !thesis) {
+    return (
+      <AppShell>
+        <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
+          Loading your thesis…
+        </div>
+      </AppShell>
+    );
+  }
+
+  const showCoachMark = !thesis.seenCoachMark && stats.reviewed === 0;
 
   return (
     <AppShell>
+      {/* Trigger — the daily count that pulls the investor back */}
       <div className="mb-6 flex items-end justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
-            Discovery
+            Today
           </div>
           <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">
-            Today's matched founders
+            {ranked.length} founders match your thesis
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Ranked against Horizon Fund thesis · {filtered.length} founders · pre-seed & seed
+            Ranked live · swipe right to save, left to pass · your thesis sharpens with every swipe
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Filter className="h-4 w-4" /> {sectorFilter.length + stageFilter.length + (hackathonOnly ? 1 : 0)} filters
-        </div>
+        <Link
+          to="/onboard"
+          className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Target className="h-3.5 w-3.5" /> Edit thesis
+        </Link>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        {/* Left rail: session stats + keys */}
+        {/* Left rail — Session (Investment record made visible) */}
         <aside className="col-span-3 space-y-4">
           <div className="rounded-2xl glass p-5">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Session
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-3 gap-2">
               {[
                 ["Reviewed", stats.reviewed],
-                ["Shortlisted", stats.shortlisted],
-                ["Watched", stats.watched],
-                ["Contacted", stats.contacted],
+                ["Saved", stats.shortlisted],
+                ["Watch", stats.watched],
               ].map(([l, v]) => (
                 <div key={l as string} className="rounded-xl border border-border/60 bg-elevated/60 p-3">
                   <div className="tabular text-2xl font-semibold">{v}</div>
@@ -141,14 +189,30 @@ function SwipeDeck() {
 
           <div className="rounded-2xl glass p-5">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Your thesis
+            </div>
+            <div className="mt-3 space-y-2 text-xs">
+              <ThesisChips label="Stage" values={thesis.stages} />
+              <ThesisChips label="Sector" values={thesis.sectors} />
+              <ThesisChips label="Geo" values={thesis.geos.length ? thesis.geos : ["Global"]} />
+            </div>
+            <Link
+              to="/onboard"
+              className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-mint"
+            >
+              Refine →
+            </Link>
+          </div>
+
+          <div className="rounded-2xl glass p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Keyboard
             </div>
-            <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
+            <ul className="mt-3 space-y-1.5 text-xs text-muted-foreground">
               {[
                 ["←", "Pass"],
-                ["→", "Shortlist"],
+                ["→", "Save"],
                 ["↑", "Watch"],
-                ["↓", "Contact"],
               ].map(([k, l]) => (
                 <li key={k} className="flex items-center gap-3">
                   <kbd className="grid h-6 w-6 place-items-center rounded border border-border bg-elevated text-[11px] text-foreground">
@@ -159,30 +223,30 @@ function SwipeDeck() {
               ))}
             </ul>
           </div>
-
-          <div className="rounded-2xl border border-mint/25 bg-mint-soft/30 p-5">
-            <div className="text-xs font-medium text-mint">Founder mode</div>
-            <p className="mt-2 text-xs text-foreground/80">
-              You're a builder? Publish a profile — investors swipe on evidence, not warm intros.
-            </p>
-            <Link
-              to="/me"
-              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-mint"
-            >
-              Create founder profile →
-            </Link>
-          </div>
         </aside>
 
-        {/* Center: card stack */}
+        {/* Center — the card stack (Action) */}
         <div className="col-span-6">
-          <div className="relative mx-auto min-h-[880px] max-w-md">
+          <div className="relative mx-auto min-h-[900px] max-w-md">
+            {showCoachMark && current && (
+              <div className="absolute -top-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-mint/30 bg-background/90 px-4 py-2 text-xs shadow-lg backdrop-blur">
+                Swipe <span className="font-semibold text-mint">right</span> to save,{" "}
+                <span className="font-semibold">left</span> to pass · score reveals after each swipe
+                <button
+                  onClick={dismissCoachMark}
+                  className="ml-2 rounded-full text-muted-foreground hover:text-foreground"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {next2 && (
               <div
                 className="absolute inset-x-0 top-0 origin-top scale-[0.92] opacity-40"
                 style={{ transform: "translateY(28px) scale(0.9)" }}
               >
-                <FounderCard founder={next2} />
+                <FounderCard founder={next2.founder} hideScore />
               </div>
             )}
             {next1 && (
@@ -190,7 +254,7 @@ function SwipeDeck() {
                 className="absolute inset-x-0 top-0 origin-top scale-[0.96] opacity-70"
                 style={{ transform: "translateY(14px) scale(0.95)" }}
               >
-                <FounderCard founder={next1} />
+                <FounderCard founder={next1.founder} hideScore />
               </div>
             )}
             {current ? (
@@ -214,36 +278,49 @@ function SwipeDeck() {
                   transform: exiting
                     ? `translateX(${exiting === "pass" ? -800 : exiting === "shortlist" ? 800 : 0}px) translateY(${exiting === "watch" ? -800 : exiting === "contact" ? 800 : 0}px) rotate(${exiting === "pass" ? -20 : exiting === "shortlist" ? 20 : 0}deg)`
                     : undefined,
-                  transition: exiting ? "transform 260ms ease-in" : undefined,
+                  transition: exiting ? "transform 320ms ease-in" : undefined,
                   opacity: exiting ? 0 : 1,
                 }}
               >
-                <FounderCard founder={current} dragOffset={drag} />
+                <FounderCard
+                  founder={current.founder}
+                  dragOffset={drag}
+                  match={current.match}
+                  hideScore={!revealed && !exiting}
+                />
               </div>
             ) : (
               <div className="grid h-full place-items-center rounded-3xl border border-dashed border-border bg-card/40 p-10 text-center">
                 <div>
-                  <div className="text-lg font-medium">You've reviewed today's top matches</div>
+                  <div className="text-lg font-medium">You're through today's matches</div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Refine your thesis to see more, or open your watchlist.
+                    Come back tomorrow for a fresh batch, refine your thesis, or open Saved.
                   </p>
-                  <button
-                    onClick={() => setIdx(0)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-elevated px-4 py-2 text-sm hover:bg-accent"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" /> Restart deck
-                  </button>
+                  <div className="mt-4 flex justify-center gap-2">
+                    <button
+                      onClick={() => setIdx(0)}
+                      className="inline-flex items-center gap-2 rounded-full border border-border bg-elevated px-4 py-2 text-sm hover:bg-accent"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Restart
+                    </button>
+                    <Link
+                      to="/watchlist"
+                      className="rounded-full bg-mint px-4 py-2 text-sm font-medium text-primary-foreground"
+                    >
+                      Open Saved
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Action bar */}
+          {/* Action bar — the three primary verbs */}
           <div className="mt-8 flex items-center justify-center gap-4">
             {[
               { key: "pass" as const, Icon: X, color: "var(--rose)", label: "Pass" },
               { key: "watch" as const, Icon: Eye, color: "var(--amber)", label: "Watch" },
-              { key: "shortlist" as const, Icon: Heart, color: "var(--mint)", label: "Shortlist", primary: true },
+              { key: "shortlist" as const, Icon: Heart, color: "var(--mint)", label: "Save", primary: true },
               { key: "contact" as const, Icon: MessageCircle, color: "oklch(0.72 0.16 260)", label: "Contact" },
             ].map(({ key, Icon, color, label, primary }) => (
               <button
@@ -261,7 +338,7 @@ function SwipeDeck() {
                     boxShadow: primary ? `0 0 30px ${color}55` : undefined,
                   }}
                 >
-                  <Icon className={`h-5 w-5 ${primary ? "" : ""}`} strokeWidth={2.2} />
+                  <Icon className="h-5 w-5" strokeWidth={2.2} />
                 </span>
                 <span className="text-[11px] text-muted-foreground">{label}</span>
               </button>
@@ -269,106 +346,46 @@ function SwipeDeck() {
           </div>
         </div>
 
-        {/* Right rail: filters */}
+        {/* Right rail — Up next queue */}
         <aside className="col-span-3 space-y-4">
           <div className="rounded-2xl glass p-5">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Thesis filters
-              </div>
-              <button
-                className="text-[11px] text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setSectorFilter([]);
-                  setStageFilter([]);
-                  setHackathonOnly(false);
-                  setMinFit(0);
-                }}
-              >
-                Reset
-              </button>
+            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Up next
             </div>
-
-            <div className="mt-4 space-y-4">
-              <div>
-                <div className="mb-2 text-[11px] text-muted-foreground">Sector</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {SECTORS.map((s) => {
-                    const active = sectorFilter.includes(s);
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => toggle(sectorFilter, s, setSectorFilter)}
-                        className={`rounded-full border px-2.5 py-0.5 text-[11px] transition ${
-                          active
-                            ? "border-mint bg-mint-soft text-mint"
-                            : "border-border bg-elevated text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
+            <div className="mt-3 space-y-2">
+              {ranked.slice(idx + 1, idx + 6).map(({ founder: f, match }) => (
+                <div
+                  key={f.id}
+                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-elevated/60 p-2 text-xs"
+                >
+                  <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-elevated">
+                    <img src={f.avatar} alt="" className="h-full w-full object-cover" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{f.name}</div>
+                    <div className="truncate text-[10px] text-muted-foreground">{f.sector} · {f.stage}</div>
+                  </div>
+                  <div className="tabular text-[11px] font-semibold text-mint blur-sm" title="Reveals when you reach this card">
+                    {match.total}
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <div className="mb-2 text-[11px] text-muted-foreground">Stage</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {STAGES.map((s) => {
-                    const active = stageFilter.includes(s);
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => toggle(stageFilter, s, setStageFilter)}
-                        className={`rounded-full border px-2.5 py-0.5 text-[11px] transition ${
-                          active
-                            ? "border-mint bg-mint-soft text-mint"
-                            : "border-border bg-elevated text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
+              ))}
+              {ranked.slice(idx + 1).length === 0 && (
+                <div className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  End of today's queue.
                 </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-baseline justify-between text-[11px] text-muted-foreground">
-                  <span>Min. Founder Fit</span>
-                  <span className="tabular font-medium text-foreground">{minFit}</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={95}
-                  value={minFit}
-                  onChange={(e) => setMinFit(Number(e.target.value))}
-                  className="w-full accent-[var(--mint)]"
-                />
-              </div>
-
-              <label className="flex items-center gap-2 text-xs text-foreground/80">
-                <input
-                  type="checkbox"
-                  checked={hackathonOnly}
-                  onChange={(e) => setHackathonOnly(e.target.checked)}
-                  className="h-3.5 w-3.5 accent-[var(--mint)]"
-                />
-                Hackathon-sourced only
-              </label>
+              )}
             </div>
           </div>
 
           <div className="rounded-2xl glass p-5">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Watchlist
+              Saved this session
             </div>
             <div className="mt-3 space-y-2">
               {Object.entries(decisions)
                 .filter(([, d]) => d === "shortlist" || d === "watch")
-                .slice(-4)
+                .slice(-3)
                 .map(([id, d]) => {
                   const f = founders.find((x) => x.id === id);
                   if (!f) return null;
@@ -387,12 +404,12 @@ function SwipeDeck() {
                         <div className="truncate text-[10px] text-muted-foreground">{f.headline}</div>
                       </div>
                       <span
-                        className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
-                          d === "shortlist"
-                            ? "border border-mint/30 bg-mint-soft text-mint"
-                            : "border border-amber/30 bg-amber/10 text-amber"
-                        }`}
-                        style={{ color: d === "shortlist" ? "var(--mint)" : "var(--amber)" }}
+                        className="rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+                        style={{
+                          color: d === "shortlist" ? "var(--mint)" : "var(--amber)",
+                          borderColor: d === "shortlist" ? "var(--mint)" : "var(--amber)",
+                          borderWidth: 1,
+                        }}
                       >
                         {d}
                       </span>
@@ -401,7 +418,7 @@ function SwipeDeck() {
                 })}
               {Object.keys(decisions).length === 0 && (
                 <div className="flex items-center gap-2 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
-                  <Bookmark className="h-3.5 w-3.5" /> No shortlist yet — swipe right.
+                  <Bookmark className="h-3.5 w-3.5" /> Nothing saved yet.
                 </div>
               )}
             </div>
@@ -409,7 +426,7 @@ function SwipeDeck() {
         </aside>
       </div>
 
-      {/* Discovered founders — sourced across the web */}
+      {/* Discovered founders — sourced from the web (secondary surface) */}
       <section className="mt-14">
         <div className="mb-5 flex items-end justify-between">
           <div>
@@ -420,64 +437,73 @@ function SwipeDeck() {
               Founders discovered across the web
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Auto-crawled from GitHub, hackathon leaderboards, arXiv, LinkedIn and press signals — click to open the full profile.
+              Auto-crawled from GitHub, hackathon leaderboards, arXiv and press — click any founder for the full profile.
             </p>
           </div>
-          <div className="text-xs text-muted-foreground">
-            {filtered.length} founders · {filtered.reduce((n, f) => n + discoveredSources(f).length, 0)} sources
-          </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {filtered.map((f) => {
-            const sources = discoveredSources(f);
-            return (
-              <Link
-                key={f.id}
-                to="/founder/$id"
-                params={{ id: f.id }}
-                className="group flex items-center gap-4 rounded-2xl glass p-4 transition hover:border-mint/40 hover:shadow-[0_0_30px_-10px_var(--mint-soft)]"
-              >
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-border bg-elevated">
-                  <img src={f.avatar} alt={f.name} className="h-full w-full object-cover" />
-                </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {ranked.slice(0, 9).map(({ founder: f, match }) => (
+            <Link
+              key={f.id}
+              to="/founder/$id"
+              params={{ id: f.id }}
+              className="rounded-2xl glass p-4 transition hover:border-mint/40"
+            >
+              <div className="flex items-start gap-3">
+                <img src={f.avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="truncate text-sm font-semibold">{f.name}</div>
-                    <span className="rounded-full border border-mint/30 bg-mint-soft px-1.5 py-0.5 text-[10px] font-medium text-mint">
-                      Fit {f.scores.fit}
-                    </span>
-                    <span className="rounded-full border border-border bg-elevated px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                      {f.stage}
-                    </span>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="truncate text-sm font-medium">{f.name}</div>
+                    <div className="tabular text-xs font-semibold text-mint">{match.total}</div>
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">{f.headline}</div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {sources.slice(0, 4).map((s, i) => (
-                      <span
-                        key={i}
-                        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-elevated/50 px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                        title={s.detail}
-                      >
-                        {s.kind === "github" && <Github className="h-2.5 w-2.5" />}
-                        {s.kind === "hackathon" && <Trophy className="h-2.5 w-2.5 text-mint" />}
-                        {s.kind === "linkedin" && <Linkedin className="h-2.5 w-2.5" />}
-                        {s.label}
-                      </span>
-                    ))}
-                    {sources.length > 4 && (
-                      <span className="text-[10px] text-muted-foreground">+{sources.length - 4}</span>
-                    )}
-                  </div>
+                  <div className="truncate text-xs text-muted-foreground">{f.headline}</div>
                 </div>
-                <div className="shrink-0 text-[11px] text-mint opacity-0 transition group-hover:opacity-100">
-                  Open →
-                </div>
-              </Link>
-            );
-          })}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {discoveredSources(f).slice(0, 3).map((s, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+                  >
+                    {s.kind === "github" && <Github className="h-2.5 w-2.5" />}
+                    {s.kind === "hackathon" && <Trophy className="h-2.5 w-2.5 text-mint" />}
+                    {s.label}
+                  </span>
+                ))}
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
+
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-full border border-mint/30 bg-background/90 px-5 py-2.5 text-sm shadow-lg backdrop-blur">
+          <Sparkles className="mr-2 inline h-3.5 w-3.5 text-mint" />
+          {toast}
+        </div>
+      )}
     </AppShell>
   );
+}
 
+function ThesisChips({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {values.length === 0 ? (
+          <span className="text-[11px] text-muted-foreground">Any</span>
+        ) : (
+          values.map((v) => (
+            <span
+              key={v}
+              className="rounded-full border border-mint/25 bg-mint-soft/40 px-2 py-0.5 text-[10px] text-mint"
+            >
+              {v}
+            </span>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }

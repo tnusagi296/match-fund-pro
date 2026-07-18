@@ -1,10 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Github, MapPin, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame, Github, MapPin, Sparkles, Trophy } from "lucide-react";
 import { discoveredSources, type Founder } from "@/data/matchfund";
+import type { MatchScore } from "@/lib/thesis";
 import { ScoreBar } from "./ScoreRing";
 
 
-export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dragOffset?: number }) {
+export function FounderCard({
+  founder,
+  dragOffset = 0,
+  match,
+  hideScore = false,
+}: {
+  founder: Founder;
+  dragOffset?: number;
+  match?: MatchScore;
+  hideScore?: boolean;
+}) {
   const rot = dragOffset * 0.04;
   const tint =
     dragOffset > 40
@@ -78,28 +89,69 @@ export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dra
           ))}
         </div>
 
-        <div className="mt-6 grid grid-cols-4 gap-3">
-          {(
-            [
-              ["Fit", founder.scores.fit],
-              ["Idea", founder.scores.idea],
-              ["Traction", founder.scores.traction],
-              ["Trust", founder.scores.trust],
-            ] as const
-          ).map(([label, val]) => (
-            <div key={label}>
-              <ScoreBar label={label} value={val} />
+        {/* Match reveal — variable reward. Shown blurred until swiped. */}
+        <div className="mt-6 relative">
+          {match && (
+            <div
+              className={`mb-3 flex items-center justify-between rounded-2xl border p-3 transition-all ${
+                match.isRareFind
+                  ? "border-amber/40 bg-amber/10"
+                  : "border-mint/30 bg-mint-soft/40"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {match.isRareFind ? (
+                  <Flame className="h-4 w-4 text-amber" />
+                ) : (
+                  <Sparkles className="h-4 w-4 text-mint" />
+                )}
+                <div className="text-xs">
+                  <div className="font-medium">
+                    {match.isRareFind ? "Rare find" : "Thesis match"}
+                  </div>
+                  <div className="text-muted-foreground">
+                    {match.reasons.join(" · ") || founder.matchReason}
+                  </div>
+                </div>
+              </div>
+              <div className="tabular text-2xl font-semibold" style={{ color: match.isRareFind ? "var(--amber)" : "var(--mint)" }}>
+                {match.total}
+              </div>
             </div>
-          ))}
+          )}
+
+          <div className={`grid grid-cols-4 gap-3 transition ${hideScore ? "blur-md opacity-40 pointer-events-none select-none" : ""}`}>
+            {(
+              [
+                ["Fit", founder.scores.fit],
+                ["Idea", founder.scores.idea],
+                ["Traction", founder.scores.traction],
+                ["Trust", founder.scores.trust],
+              ] as const
+            ).map(([label, val]) => (
+              <div key={label}>
+                <ScoreBar label={label} value={val} />
+              </div>
+            ))}
+          </div>
+          {hideScore && (
+            <div className="pointer-events-none absolute inset-0 grid place-items-center">
+              <div className="rounded-full border border-mint/30 bg-background/70 px-3 py-1 text-[11px] font-medium text-mint backdrop-blur">
+                Swipe to reveal
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="mt-5 flex items-start gap-2 rounded-xl border border-mint/20 bg-mint-soft/40 p-3 text-xs">
-          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-mint" />
-          <span className="text-foreground/85">
-            <span className="font-medium text-mint">Why matched · </span>
-            {founder.matchReason}
-          </span>
-        </div>
+        {!match && (
+          <div className="mt-5 flex items-start gap-2 rounded-xl border border-mint/20 bg-mint-soft/40 p-3 text-xs">
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-mint" />
+            <span className="text-foreground/85">
+              <span className="font-medium text-mint">Why matched · </span>
+              {founder.matchReason}
+            </span>
+          </div>
+        )}
 
         <div className="mt-5">
           <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
