@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, MapPin, Sparkles, Trophy } from "lucide-react";
-import type { Founder } from "@/data/matchfund";
+import { ArrowRight, CheckCircle2, Github, MapPin, Sparkles, Trophy } from "lucide-react";
+import { discoveredSources, type Founder } from "@/data/matchfund";
 import { ScoreBar } from "./ScoreRing";
+
 
 export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dragOffset?: number }) {
   const rot = dragOffset * 0.04;
