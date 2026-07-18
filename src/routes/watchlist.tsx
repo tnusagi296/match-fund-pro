@@ -67,7 +67,7 @@ function WatchlistPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="overflow-hidden rounded-2xl glass">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
               <tr>

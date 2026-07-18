@@ -124,7 +124,7 @@ function IdeaStrength() {
                 return (
                   <div
                     key={f.key}
-                    className="absolute w-52 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card/90 p-3 shadow-xl backdrop-blur"
+                    className="absolute w-52 -translate-x-1/2 -translate-y-1/2 rounded-xl glass/90 p-3 shadow-xl backdrop-blur"
                     style={{ top: `${y}%`, left: `${x}%` }}
                   >
                     <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ function IdeaStrength() {
       </div>
 
       <div className="mt-8 grid grid-cols-12 gap-6">
-        <section className="col-span-4 rounded-2xl border border-border bg-card p-5">
+        <section className="col-span-4 rounded-2xl glass p-5">
           <div className="flex items-center gap-2">
             <Users2 className="h-4 w-4 text-mint" />
             <h2 className="text-sm font-medium">Founder & Traction</h2>
@@ -187,7 +187,7 @@ function IdeaStrength() {
           </div>
         </section>
 
-        <section className="col-span-3 rounded-2xl border border-border bg-card p-5">
+        <section className="col-span-3 rounded-2xl glass p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium">Top Strengths</h2>
             <button className="text-[11px] text-mint">View all</button>
@@ -211,7 +211,7 @@ function IdeaStrength() {
       </div>
 
       {founder.companyId && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl glass p-4">
           <Building2 className="h-5 w-5 text-mint" />
           <div className="flex-1 text-sm">
             <span className="text-muted-foreground">Company diligence available · </span>

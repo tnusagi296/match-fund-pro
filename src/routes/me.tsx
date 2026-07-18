@@ -139,7 +139,7 @@ function FounderOnboarding() {
         </p>
       </div>
 
-      <div className="mb-8 flex items-center gap-2 rounded-2xl border border-border bg-card p-2">
+      <div className="mb-8 flex items-center gap-2 rounded-2xl glass p-2">
         {STEPS.map((s, i) => (
           <button
             key={s}
@@ -170,7 +170,7 @@ function FounderOnboarding() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-8 rounded-2xl border border-border bg-card p-6">
+        <div className="col-span-8 rounded-2xl glass p-6">
           {step === 0 && (
             <div>
               <h2 className="text-lg font-medium">Who are you building?</h2>
@@ -247,7 +247,7 @@ function FounderOnboarding() {
                 </div>
               )}
 
-              <div className="relative mt-6 overflow-hidden rounded-xl border border-border bg-elevated/50 p-6">
+              <div className="relative mt-6 overflow-hidden rounded-xl glass-subtle p-6">
                 {crawling && (
                   <div
                     className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_2s_ease-in-out_infinite]"
@@ -323,7 +323,7 @@ function FounderOnboarding() {
               </label>
 
               {deckText && (
-                <div className="mt-4 rounded-lg border border-border bg-elevated/40 p-3 text-[11px] text-muted-foreground max-h-40 overflow-auto">
+                <div className="mt-4 rounded-lg glass-subtle p-3 text-[11px] text-muted-foreground max-h-40 overflow-auto">
                   {deckText.slice(0, 600)}…
                 </div>
               )}
@@ -339,7 +339,7 @@ function FounderOnboarding() {
               <p className="mt-1 text-xs text-muted-foreground">
                 This is exactly what investors will see when they swipe on you.
               </p>
-              <div className="mt-5 flex items-start gap-5 rounded-2xl border border-border bg-elevated/40 p-5">
+              <div className="mt-5 flex items-start gap-5 rounded-2xl glass-subtle p-5">
                 <div className="grid h-16 w-16 place-items-center rounded-xl bg-mint text-lg font-bold text-primary-foreground">
                   {(name || "You").slice(0, 2).toUpperCase()}
                 </div>
@@ -414,7 +414,7 @@ function FounderOnboarding() {
         </div>
 
         <aside className="col-span-4 space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Zap className="h-4 w-4 text-mint" /> Real pipeline
             </div>
@@ -425,7 +425,7 @@ function FounderOnboarding() {
               <li>· Gemini 3.5 Flash — scoring & summary</li>
             </ul>
           </div>
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="flex items-center gap-2 text-sm font-medium">
               <FileUp className="h-4 w-4 text-mint" /> Optional uploads
             </div>
@@ -456,7 +456,7 @@ function Field({
   return (
     <label className="block">
       <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-elevated/50 px-3 py-2 focus-within:border-mint/40">
+      <div className="flex items-center gap-2 rounded-lg glass-subtle px-3 py-2 focus-within:border-mint/40">
         {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
         {children}
       </div>
@@ -466,7 +466,7 @@ function Field({
 
 function Perk({ icon: Icon, title, value }: { icon: React.ComponentType<{ className?: string }>; title: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-elevated/40 p-3">
+    <div className="rounded-lg glass-subtle p-3">
       <Icon className="h-3.5 w-3.5 text-mint" />
       <div className="mt-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{title}</div>
       <div className="mt-0.5 text-sm font-semibold">{value}</div>

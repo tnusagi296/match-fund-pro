@@ -30,7 +30,7 @@ function GrantsPage() {
         </p>
       </div>
 
-      <div className="mb-6 flex items-center gap-2 rounded-full border border-border bg-card p-1 w-fit">
+      <div className="mb-6 flex items-center gap-2 rounded-full glass p-1 w-fit">
         {(["All", ...TYPES] as const).map((t) => (
           <button
             key={t}
@@ -48,7 +48,7 @@ function GrantsPage() {
         {filtered.map((g) => (
           <div
             key={g.id}
-            className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition hover:border-mint/40"
+            className="group flex flex-col rounded-2xl glass p-5 transition hover:border-mint/40"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ function GrantsPage() {
           onClick={() => setSelected(null)}
         >
           <div
-            className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl"
+            className="w-full max-w-xl rounded-2xl glass p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">

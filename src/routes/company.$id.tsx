@@ -44,7 +44,7 @@ export const Route = createFileRoute("/company/$id")({
   component: CompanyDiligence,
   notFoundComponent: () => (
     <AppShell>
-      <div className="rounded-2xl border border-border bg-card p-10 text-center">
+      <div className="rounded-2xl glass p-10 text-center">
         <div className="text-lg font-medium">Company not found</div>
       </div>
     </AppShell>
@@ -102,7 +102,7 @@ function CompanyDiligence() {
 
         {/* Center: dual score rings */}
         <div className="col-span-5">
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-6">
+          <div className="relative overflow-hidden rounded-3xl glass p-6">
             <div
               className="pointer-events-none absolute inset-0 opacity-70"
               style={{
@@ -129,7 +129,7 @@ function CompanyDiligence() {
 
         {/* Right: recommendation */}
         <div className="col-span-3">
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="text-sm font-medium">Recommendation</div>
             <div className="mt-2 inline-flex items-center gap-2 text-mint">
               <CheckCircle2 className="h-5 w-5" />
@@ -164,7 +164,7 @@ function CompanyDiligence() {
 
       {/* KPIs + timeline */}
       <div className="mt-6 grid grid-cols-12 gap-6">
-        <section className="col-span-7 rounded-2xl border border-border bg-card p-6">
+        <section className="col-span-7 rounded-2xl glass p-6">
           <h2 className="text-sm font-medium">Traction Overview</h2>
           <div className="mt-4 grid grid-cols-5 gap-3">
             <Kpi label="Pilots" value={String(company.kpis.pilots)} sub="Active pilots" delta={company.deltas.pilots} />
@@ -175,7 +175,7 @@ function CompanyDiligence() {
           </div>
         </section>
 
-        <section className="col-span-5 rounded-2xl border border-border bg-card p-6">
+        <section className="col-span-5 rounded-2xl glass p-6">
           <h2 className="text-sm font-medium">Traction Timeline</h2>
           <div className="mt-4 h-40">
             <ResponsiveContainer width="100%" height="100%">
@@ -211,7 +211,7 @@ function CompanyDiligence() {
 
       {/* Evidence / signals / path */}
       <div className="mt-6 grid grid-cols-12 gap-6">
-        <section className="col-span-5 rounded-2xl border border-border bg-card p-6">
+        <section className="col-span-5 rounded-2xl glass p-6">
           <h2 className="text-sm font-medium">Evidence Trail</h2>
           <div className="mt-4 space-y-2">
             {company.evidence.map((e, i) => (
@@ -242,7 +242,7 @@ function CompanyDiligence() {
           </button>
         </section>
 
-        <section className="col-span-4 rounded-2xl border border-border bg-card p-6">
+        <section className="col-span-4 rounded-2xl glass p-6">
           <h2 className="text-sm font-medium">Key Signals</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {company.signals.map((s, i) => (
@@ -261,7 +261,7 @@ function CompanyDiligence() {
           </ul>
         </section>
 
-        <section className="col-span-3 rounded-2xl border border-border bg-card p-6">
+        <section className="col-span-3 rounded-2xl glass p-6">
           <h2 className="text-sm font-medium">Investor Path</h2>
           <div className="mt-6 space-y-3">
             {[
@@ -296,7 +296,7 @@ function CompanyDiligence() {
       </div>
 
       {founder && (
-        <div className="mt-6 flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+        <div className="mt-6 flex items-center gap-4 rounded-2xl glass p-4">
           <img src={founder.avatar} alt="" className="h-12 w-12 rounded-full object-cover" />
           <div className="flex-1">
             <div className="text-xs text-muted-foreground">Founder</div>
