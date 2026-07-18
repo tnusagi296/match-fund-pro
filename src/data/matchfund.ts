@@ -611,3 +611,46 @@ export const grants: Grant[] = [
 
 export const founderById = (id: string) => founders.find((f) => f.id === id);
 export const companyById = (id: string) => companies[id];
+
+export type DiscoveredSource = {
+  kind: "github" | "hackathon" | "arxiv" | "linkedin" | "producthunt" | "press" | "web";
+  label: string;
+  detail: string;
+  url?: string;
+};
+
+// Derive "where we found this founder" from existing signals — used on the
+// home discovery list and the founder profile page.
+export function discoveredSources(f: Founder): DiscoveredSource[] {
+  const out: DiscoveredSource[] = [];
+  if (f.signals.githubActivity !== "Low") {
+    out.push({
+      kind: "github",
+      label: "GitHub",
+      detail: `${f.signals.githubActivity} activity · ${f.signals.priorProjects} shipped projects`,
+      url: `https://github.com/${f.name.split(" ")[0].toLowerCase()}`,
+    });
+  }
+  for (const h of f.hackathons.slice(0, 2)) {
+    out.push({ kind: "hackathon", label: h.event, detail: `${h.placement} · ${h.date}` });
+  }
+  if (f.sector === "Bio" || f.sector === "AI" || f.sector === "Robotics") {
+    out.push({
+      kind: "arxiv",
+      label: f.sector === "Bio" ? "Semantic Scholar" : "arXiv",
+      detail: `${f.education[0]?.school ?? "Research"} · ${f.skills[0]}`,
+    });
+  }
+  out.push({
+    kind: "linkedin",
+    label: "LinkedIn",
+    detail: f.experience[0] ? `${f.experience[0].role} · ${f.experience[0].company}` : f.location,
+  });
+  if (f.updates.some((u) => /Product Hunt/i.test(u.text))) {
+    out.push({ kind: "producthunt", label: "Product Hunt", detail: "Featured launch" });
+  }
+  const growth = f.updates.find((u) => /MAU|users|stars/i.test(u.text));
+  if (growth) out.push({ kind: "press", label: "Signal feed", detail: growth.text });
+  return out;
+}
+

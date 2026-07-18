@@ -6,6 +6,7 @@ import {
   ExternalLink,
   FileText,
   Github,
+  Globe,
   Layers,
   Linkedin,
   MapPin,
@@ -18,7 +19,8 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { ScoreBar, ScoreRing } from "@/components/matchfund/ScoreRing";
-import { companyById, founderById, type Founder } from "@/data/matchfund";
+import { companyById, discoveredSources, founderById, type Founder } from "@/data/matchfund";
+
 
 export const Route = createFileRoute("/founder/$id")({
   loader: ({ params }): { founder: Founder } => {
@@ -85,11 +87,11 @@ function FounderProfile() {
               Founder Profile
             </span>
             <div className="mt-3 flex items-center gap-2">
-              <h1 className="font-display text-5xl font-semibold tracking-tight">{founder.name}</h1>
-              {founder.verified && <CheckCircle2 className="h-5 w-5 text-mint" />}
+              <h1 className="font-display text-6xl font-semibold tracking-tight">{founder.name}</h1>
+              {founder.verified && <CheckCircle2 className="h-6 w-6 text-mint" />}
             </div>
-            <p className="mt-2 text-lg text-muted-foreground">{founder.headline}</p>
-            <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+            <p className="mt-3 text-xl text-muted-foreground">{founder.headline}</p>
+            <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" /> {founder.location}
               </span>
@@ -101,7 +103,8 @@ function FounderProfile() {
             </div>
           </div>
 
-          <p className="text-sm leading-relaxed text-foreground/85">{founder.bio}</p>
+          <p className="text-base leading-relaxed text-foreground/85">{founder.bio}</p>
+
 
           <div className="flex flex-wrap gap-1.5">
             {founder.skills.map((s) => (
@@ -172,6 +175,55 @@ function FounderProfile() {
               <SignalTile icon={Users} label="Team" value={founder.signals.teamSize} sub={parseInt(founder.signals.teamSize) === parseInt(founder.signals.teamSize.split("/")[1]) ? "Complete" : "Building"} />
             </div>
           </section>
+
+          {/* Discovered Sources */}
+          <section className="rounded-2xl glass p-6">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-medium">Discovered sources</h2>
+              <span className="text-[11px] text-muted-foreground">
+                Auto-crawled evidence · {discoveredSources(founder).length} sources
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {discoveredSources(founder).map((s, i) => {
+                const Icon =
+                  s.kind === "github"
+                    ? Github
+                    : s.kind === "linkedin"
+                      ? Linkedin
+                      : s.kind === "hackathon"
+                        ? Trophy
+                        : s.kind === "arxiv"
+                          ? FileText
+                          : s.kind === "producthunt"
+                            ? Rocket
+                            : Globe;
+                const content = (
+                  <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-elevated/60 p-3 transition hover:border-mint/40">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-mint-soft">
+                      <Icon className="h-4 w-4 text-mint" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate text-sm font-medium">{s.label}</div>
+                        {s.url && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                      </div>
+                      <div className="mt-0.5 truncate text-xs text-muted-foreground">{s.detail}</div>
+                    </div>
+                  </div>
+                );
+                return s.url ? (
+                  <a key={i} href={s.url} target="_blank" rel="noreferrer">
+                    {content}
+                  </a>
+                ) : (
+                  <div key={i}>{content}</div>
+                );
+              })}
+            </div>
+          </section>
+
+
 
           {/* Hackathons */}
           {founder.hackathons.length > 0 && (
