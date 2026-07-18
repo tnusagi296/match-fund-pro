@@ -408,6 +408,76 @@ function SwipeDeck() {
           </div>
         </aside>
       </div>
+
+      {/* Discovered founders — sourced across the web */}
+      <section className="mt-14">
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
+              Sourced
+            </div>
+            <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">
+              Founders discovered across the web
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Auto-crawled from GitHub, hackathon leaderboards, arXiv, LinkedIn and press signals — click to open the full profile.
+            </p>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {filtered.length} founders · {filtered.reduce((n, f) => n + discoveredSources(f).length, 0)} sources
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {filtered.map((f) => {
+            const sources = discoveredSources(f);
+            return (
+              <Link
+                key={f.id}
+                to="/founder/$id"
+                params={{ id: f.id }}
+                className="group flex items-center gap-4 rounded-2xl glass p-4 transition hover:border-mint/40 hover:shadow-[0_0_30px_-10px_var(--mint-soft)]"
+              >
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-border bg-elevated">
+                  <img src={f.avatar} alt={f.name} className="h-full w-full object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-semibold">{f.name}</div>
+                    <span className="rounded-full border border-mint/30 bg-mint-soft px-1.5 py-0.5 text-[10px] font-medium text-mint">
+                      Fit {f.scores.fit}
+                    </span>
+                    <span className="rounded-full border border-border bg-elevated px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {f.stage}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 truncate text-xs text-muted-foreground">{f.headline}</div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {sources.slice(0, 4).map((s, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-elevated/50 px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                        title={s.detail}
+                      >
+                        {s.kind === "github" && <Github className="h-2.5 w-2.5" />}
+                        {s.kind === "hackathon" && <Trophy className="h-2.5 w-2.5 text-mint" />}
+                        {s.kind === "linkedin" && <Linkedin className="h-2.5 w-2.5" />}
+                        {s.label}
+                      </span>
+                    ))}
+                    {sources.length > 4 && (
+                      <span className="text-[10px] text-muted-foreground">+{sources.length - 4}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="shrink-0 text-[11px] text-mint opacity-0 transition group-hover:opacity-100">
+                  Open →
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </AppShell>
   );
+
 }
