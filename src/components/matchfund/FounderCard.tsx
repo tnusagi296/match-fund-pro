@@ -24,7 +24,7 @@ export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dra
     >
 
       {/* header photo strip */}
-      <div className="relative h-56 overflow-hidden">
+      <div className="relative h-56 overflow-hidden rounded-t-3xl">
         <div
           className="absolute inset-0"
           style={{
