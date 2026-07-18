@@ -87,11 +87,11 @@ function FounderProfile() {
               Founder Profile
             </span>
             <div className="mt-3 flex items-center gap-2">
-              <h1 className="font-display text-5xl font-semibold tracking-tight">{founder.name}</h1>
-              {founder.verified && <CheckCircle2 className="h-5 w-5 text-mint" />}
+              <h1 className="font-display text-6xl font-semibold tracking-tight">{founder.name}</h1>
+              {founder.verified && <CheckCircle2 className="h-6 w-6 text-mint" />}
             </div>
-            <p className="mt-2 text-lg text-muted-foreground">{founder.headline}</p>
-            <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+            <p className="mt-3 text-xl text-muted-foreground">{founder.headline}</p>
+            <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" /> {founder.location}
               </span>
@@ -103,7 +103,8 @@ function FounderProfile() {
             </div>
           </div>
 
-          <p className="text-sm leading-relaxed text-foreground/85">{founder.bio}</p>
+          <p className="text-base leading-relaxed text-foreground/85">{founder.bio}</p>
+
 
           <div className="flex flex-wrap gap-1.5">
             {founder.skills.map((s) => (
