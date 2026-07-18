@@ -6,6 +6,7 @@ import {
   ExternalLink,
   FileText,
   Github,
+  Globe,
   Layers,
   Linkedin,
   MapPin,
@@ -18,7 +19,8 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { ScoreBar, ScoreRing } from "@/components/matchfund/ScoreRing";
-import { companyById, founderById, type Founder } from "@/data/matchfund";
+import { companyById, discoveredSources, founderById, type Founder } from "@/data/matchfund";
+
 
 export const Route = createFileRoute("/founder/$id")({
   loader: ({ params }): { founder: Founder } => {
