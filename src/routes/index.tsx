@@ -176,7 +176,7 @@ function SwipeDeck() {
 
         {/* Center: card stack */}
         <div className="col-span-6">
-          <div className="relative mx-auto h-[660px] max-w-md">
+          <div className="relative mx-auto min-h-[880px] max-w-md">
             {next2 && (
               <div
                 className="absolute inset-x-0 top-0 origin-top scale-[0.92] opacity-40"
