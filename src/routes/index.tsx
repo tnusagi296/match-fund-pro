@@ -116,7 +116,7 @@ function SwipeDeck() {
       <div className="grid grid-cols-12 gap-6">
         {/* Left rail: session stats + keys */}
         <aside className="col-span-3 space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Session
             </div>
@@ -135,7 +135,7 @@ function SwipeDeck() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Keyboard
             </div>
@@ -267,7 +267,7 @@ function SwipeDeck() {
 
         {/* Right rail: filters */}
         <aside className="col-span-3 space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Thesis filters
@@ -357,7 +357,7 @@ function SwipeDeck() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Watchlist
             </div>

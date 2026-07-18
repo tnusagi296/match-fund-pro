@@ -14,7 +14,7 @@ export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dra
 
   return (
     <div
-      className="relative h-[640px] w-full overflow-hidden rounded-3xl border border-border bg-card shadow-2xl"
+      className="relative h-[640px] w-full overflow-hidden rounded-3xl glass shadow-2xl"
       style={{
         transform: `translateX(${dragOffset}px) rotate(${rot}deg)`,
         transition: dragOffset === 0 ? "transform 300ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
@@ -40,7 +40,7 @@ export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dra
             {founder.openTo === "cofounder" ? "Seeking cofounder" : "Open to opportunities"}
           </div>
         )}
-        <div className="absolute left-4 top-4 rounded-full border border-border bg-card/70 px-2.5 py-1 text-[11px] text-muted-foreground backdrop-blur">
+        <div className="absolute left-4 top-4 rounded-full glass/70 px-2.5 py-1 text-[11px] text-muted-foreground backdrop-blur">
           {founder.stage}
         </div>
       </div>

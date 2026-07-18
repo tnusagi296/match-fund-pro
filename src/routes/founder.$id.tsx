@@ -42,7 +42,7 @@ export const Route = createFileRoute("/founder/$id")({
   component: FounderProfile,
   notFoundComponent: () => (
     <AppShell>
-      <div className="rounded-2xl border border-border bg-card p-10 text-center">
+      <div className="rounded-2xl glass p-10 text-center">
         <div className="text-lg font-medium">Founder not found</div>
         <Link to="/" className="mt-3 inline-block text-sm text-mint">
           Back to discovery
@@ -65,7 +65,7 @@ function FounderProfile() {
       <div className="grid grid-cols-12 gap-6">
         {/* Left: profile card */}
         <div className="col-span-3">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="overflow-hidden rounded-2xl glass">
             <div className="relative aspect-[4/5]">
               <img src={founder.avatar} alt={founder.name} className="h-full w-full object-cover" />
               <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/70 to-transparent p-3">
@@ -140,7 +140,7 @@ function FounderProfile() {
 
         {/* Right: founder fit */}
         <div className="col-span-4">
-          <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-2xl glass p-6">
             <div className="mb-4 flex items-baseline justify-between">
               <div className="text-sm font-medium">Founder Fit</div>
               <div className="text-[10px] text-muted-foreground">vs Horizon thesis</div>
@@ -163,7 +163,7 @@ function FounderProfile() {
       <div className="mt-6 grid grid-cols-12 gap-6">
         <div className="col-span-8 space-y-6">
           {/* Signals & Traction */}
-          <section className="rounded-2xl border border-border bg-card p-6">
+          <section className="rounded-2xl glass p-6">
             <h2 className="text-sm font-medium">Signals & Traction</h2>
             <div className="mt-4 grid grid-cols-4 gap-3">
               <SignalTile icon={Trophy} label="Hackathon Wins" value={String(founder.signals.hackathonWins)} sub={founder.signals.hackathonWins >= 2 ? "Top 1% National" : "Emerging"} />
@@ -175,7 +175,7 @@ function FounderProfile() {
 
           {/* Hackathons */}
           {founder.hackathons.length > 0 && (
-            <section className="rounded-2xl border border-border bg-card p-6">
+            <section className="rounded-2xl glass p-6">
               <h2 className="text-sm font-medium">Hackathon history</h2>
               <div className="mt-4 space-y-2">
                 {founder.hackathons.map((h, i) => (
@@ -209,7 +209,7 @@ function FounderProfile() {
 
           {/* Experience & Education */}
           <div className="grid grid-cols-2 gap-6">
-            <section className="rounded-2xl border border-border bg-card p-6">
+            <section className="rounded-2xl glass p-6">
               <h2 className="text-sm font-medium">Experience Snapshot</h2>
               <div className="mt-4 space-y-3">
                 {founder.experience.map((e, i) => (
@@ -229,7 +229,7 @@ function FounderProfile() {
                 ))}
               </div>
             </section>
-            <section className="rounded-2xl border border-border bg-card p-6">
+            <section className="rounded-2xl glass p-6">
               <h2 className="text-sm font-medium">Education</h2>
               <div className="mt-4 space-y-3">
                 {founder.education.map((ed, i) => (
@@ -249,7 +249,7 @@ function FounderProfile() {
           </div>
 
           {/* Pitch deck */}
-          <section className="rounded-2xl border border-border bg-card p-6">
+          <section className="rounded-2xl glass p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium">Pitch deck</h2>
               <button className="text-[11px] text-mint hover:underline">Request full deck →</button>
@@ -278,7 +278,7 @@ function FounderProfile() {
 
         {/* Right column */}
         <div className="col-span-4 space-y-6">
-          <section className="rounded-2xl border border-border bg-card p-6">
+          <section className="rounded-2xl glass p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">Related Company</h2>
               {company && (
@@ -340,7 +340,7 @@ function FounderProfile() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-border bg-card p-6">
+          <section className="rounded-2xl glass p-6">
             <h2 className="text-sm font-medium">Recent Updates</h2>
             <div className="mt-3 space-y-2">
               {founder.updates.map((u, i) => (
@@ -359,7 +359,7 @@ function FounderProfile() {
       </div>
 
       {/* Sticky footer */}
-      <div className="mt-8 flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+      <div className="mt-8 flex items-center gap-3 rounded-2xl glass p-4">
         <p className="flex-1 text-sm text-muted-foreground">
           <span className="text-foreground">High conviction founder.</span> Strong technical depth and execution track record.
         </p>
