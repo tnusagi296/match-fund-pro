@@ -18,10 +18,10 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { ScoreBar, ScoreRing } from "@/components/matchfund/ScoreRing";
-import { companyById, founderById } from "@/data/matchfund";
+import { companyById, founderById, type Founder } from "@/data/matchfund";
 
 export const Route = createFileRoute("/founder/$id")({
-  loader: ({ params }) => {
+  loader: ({ params }): { founder: Founder } => {
     const f = founderById(params.id);
     if (!f) throw notFound();
     return { founder: f };
