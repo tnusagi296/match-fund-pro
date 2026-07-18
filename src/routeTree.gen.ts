@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GrantsRouteImport } from './routes/grants'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
 import { Route as CompanyIdRouteImport } from './routes/company.$id'
 
+const GrantsRoute = GrantsRouteImport.update({
+  id: '/grants',
+  path: '/grants',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const CompanyIdRoute = CompanyIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/grants': typeof GrantsRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/grants': typeof GrantsRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/grants': typeof GrantsRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/company/$id' | '/founder/$id' | '/idea/$id'
+  fullPaths: '/' | '/grants' | '/company/$id' | '/founder/$id' | '/idea/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/company/$id' | '/founder/$id' | '/idea/$id'
-  id: '__root__' | '/' | '/company/$id' | '/founder/$id' | '/idea/$id'
+  to: '/' | '/grants' | '/company/$id' | '/founder/$id' | '/idea/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/grants'
+    | '/company/$id'
+    | '/founder/$id'
+    | '/idea/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GrantsRoute: typeof GrantsRoute
   CompanyIdRoute: typeof CompanyIdRoute
   FounderIdRoute: typeof FounderIdRoute
   IdeaIdRoute: typeof IdeaIdRoute
@@ -71,6 +87,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/grants': {
+      id: '/grants'
+      path: '/grants'
+      fullPath: '/grants'
+      preLoaderRoute: typeof GrantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GrantsRoute: GrantsRoute,
   CompanyIdRoute: CompanyIdRoute,
   FounderIdRoute: FounderIdRoute,
   IdeaIdRoute: IdeaIdRoute,
