@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as GrantsRouteImport } from './routes/grants'
@@ -26,6 +27,11 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardRoute = OnboardRouteImport.update({
+  id: '/onboard',
+  path: '/onboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/grants': typeof GrantsRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
+  '/onboard': typeof OnboardRoute
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/grants': typeof GrantsRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
+  '/onboard': typeof OnboardRoute
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/grants': typeof GrantsRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
+  '/onboard': typeof OnboardRoute
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/grants'
     | '/mcp'
     | '/me'
+    | '/onboard'
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/grants'
     | '/mcp'
     | '/me'
+    | '/onboard'
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/grants'
     | '/mcp'
     | '/me'
+    | '/onboard'
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -192,6 +204,7 @@ export interface RootRouteChildren {
   GrantsRoute: typeof GrantsRoute
   McpRoute: typeof McpRoute
   MeRoute: typeof MeRoute
+  OnboardRoute: typeof OnboardRoute
   WatchlistRoute: typeof WatchlistRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -209,6 +222,13 @@ declare module '@tanstack/react-router' {
       path: '/watchlist'
       fullPath: '/watchlist'
       preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboard': {
+      id: '/onboard'
+      path: '/onboard'
+      fullPath: '/onboard'
+      preLoaderRoute: typeof OnboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/me': {
@@ -304,6 +324,7 @@ const rootRouteChildren: RootRouteChildren = {
   GrantsRoute: GrantsRoute,
   McpRoute: McpRoute,
   MeRoute: MeRoute,
+  OnboardRoute: OnboardRoute,
   WatchlistRoute: WatchlistRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
