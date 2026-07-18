@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as MeRouteImport } from './routes/me'
 import { Route as GrantsRouteImport } from './routes/grants'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
@@ -19,6 +20,11 @@ import { Route as CompanyIdRouteImport } from './routes/company.$id'
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeRoute = MeRouteImport.update({
+  id: '/me',
+  path: '/me',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GrantsRoute = GrantsRouteImport.update({
@@ -50,6 +56,7 @@ const CompanyIdRoute = CompanyIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/grants': typeof GrantsRoute
+  '/me': typeof MeRoute
   '/watchlist': typeof WatchlistRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/grants': typeof GrantsRoute
+  '/me': typeof MeRoute
   '/watchlist': typeof WatchlistRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/grants': typeof GrantsRoute
+  '/me': typeof MeRoute
   '/watchlist': typeof WatchlistRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/grants'
+    | '/me'
     | '/watchlist'
     | '/company/$id'
     | '/founder/$id'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/grants'
+    | '/me'
     | '/watchlist'
     | '/company/$id'
     | '/founder/$id'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/grants'
+    | '/me'
     | '/watchlist'
     | '/company/$id'
     | '/founder/$id'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GrantsRoute: typeof GrantsRoute
+  MeRoute: typeof MeRoute
   WatchlistRoute: typeof WatchlistRoute
   CompanyIdRoute: typeof CompanyIdRoute
   FounderIdRoute: typeof FounderIdRoute
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/watchlist'
       fullPath: '/watchlist'
       preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/me': {
+      id: '/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof MeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/grants': {
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GrantsRoute: GrantsRoute,
+  MeRoute: MeRoute,
   WatchlistRoute: WatchlistRoute,
   CompanyIdRoute: CompanyIdRoute,
   FounderIdRoute: FounderIdRoute,
