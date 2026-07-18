@@ -15,15 +15,16 @@ export function FounderCard({ founder, dragOffset = 0 }: { founder: Founder; dra
 
   return (
     <div
-      className="relative h-[640px] w-full overflow-hidden rounded-3xl glass shadow-2xl"
+      className="relative w-full rounded-3xl glass shadow-2xl"
       style={{
         transform: `translateX(${dragOffset}px) rotate(${rot}deg)`,
         transition: dragOffset === 0 ? "transform 300ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
         boxShadow: `0 30px 60px -30px oklch(0 0 0 / 0.6), 0 0 0 1px ${tint === "transparent" ? "transparent" : tint}`,
       }}
     >
+
       {/* header photo strip */}
-      <div className="relative h-56 overflow-hidden">
+      <div className="relative h-56 overflow-hidden rounded-t-3xl">
         <div
           className="absolute inset-0"
           style={{
