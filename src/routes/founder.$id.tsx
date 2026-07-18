@@ -175,6 +175,55 @@ function FounderProfile() {
             </div>
           </section>
 
+          {/* Discovered Sources */}
+          <section className="rounded-2xl glass p-6">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-medium">Discovered sources</h2>
+              <span className="text-[11px] text-muted-foreground">
+                Auto-crawled evidence · {discoveredSources(founder).length} sources
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {discoveredSources(founder).map((s, i) => {
+                const Icon =
+                  s.kind === "github"
+                    ? Github
+                    : s.kind === "linkedin"
+                      ? Linkedin
+                      : s.kind === "hackathon"
+                        ? Trophy
+                        : s.kind === "arxiv"
+                          ? FileText
+                          : s.kind === "producthunt"
+                            ? Rocket
+                            : Globe;
+                const content = (
+                  <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-elevated/60 p-3 transition hover:border-mint/40">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-mint-soft">
+                      <Icon className="h-4 w-4 text-mint" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate text-sm font-medium">{s.label}</div>
+                        {s.url && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                      </div>
+                      <div className="mt-0.5 truncate text-xs text-muted-foreground">{s.detail}</div>
+                    </div>
+                  </div>
+                );
+                return s.url ? (
+                  <a key={i} href={s.url} target="_blank" rel="noreferrer">
+                    {content}
+                  </a>
+                ) : (
+                  <div key={i}>{content}</div>
+                );
+              })}
+            </div>
+          </section>
+
+
+
           {/* Hackathons */}
           {founder.hackathons.length > 0 && (
             <section className="rounded-2xl glass p-6">
