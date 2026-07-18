@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as IdeaIdRouteImport } from './routes/idea.$id'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
 import { Route as CompanyIdRouteImport } from './routes/company.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IdeaIdRoute = IdeaIdRouteImport.update({
+  id: '/idea/$id',
+  path: '/idea/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FounderIdRoute = FounderIdRouteImport.update({
@@ -33,30 +39,34 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
+  '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
+  '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
+  '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/company/$id' | '/founder/$id'
+  fullPaths: '/' | '/company/$id' | '/founder/$id' | '/idea/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/company/$id' | '/founder/$id'
-  id: '__root__' | '/' | '/company/$id' | '/founder/$id'
+  to: '/' | '/company/$id' | '/founder/$id' | '/idea/$id'
+  id: '__root__' | '/' | '/company/$id' | '/founder/$id' | '/idea/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompanyIdRoute: typeof CompanyIdRoute
   FounderIdRoute: typeof FounderIdRoute
+  IdeaIdRoute: typeof IdeaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/idea/$id': {
+      id: '/idea/$id'
+      path: '/idea/$id'
+      fullPath: '/idea/$id'
+      preLoaderRoute: typeof IdeaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/founder/$id': {
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompanyIdRoute: CompanyIdRoute,
   FounderIdRoute: FounderIdRoute,
+  IdeaIdRoute: IdeaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
