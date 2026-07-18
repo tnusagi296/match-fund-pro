@@ -9,38 +9,141 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as MeRouteImport } from './routes/me'
+import { Route as GrantsRouteImport } from './routes/grants'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as IdeaIdRouteImport } from './routes/idea.$id'
+import { Route as FounderIdRouteImport } from './routes/founder.$id'
+import { Route as CompanyIdRouteImport } from './routes/company.$id'
 
+const WatchlistRoute = WatchlistRouteImport.update({
+  id: '/watchlist',
+  path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeRoute = MeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GrantsRoute = GrantsRouteImport.update({
+  id: '/grants',
+  path: '/grants',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IdeaIdRoute = IdeaIdRouteImport.update({
+  id: '/idea/$id',
+  path: '/idea/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FounderIdRoute = FounderIdRouteImport.update({
+  id: '/founder/$id',
+  path: '/founder/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompanyIdRoute = CompanyIdRouteImport.update({
+  id: '/company/$id',
+  path: '/company/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/grants': typeof GrantsRoute
+  '/me': typeof MeRoute
+  '/watchlist': typeof WatchlistRoute
+  '/company/$id': typeof CompanyIdRoute
+  '/founder/$id': typeof FounderIdRoute
+  '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/grants': typeof GrantsRoute
+  '/me': typeof MeRoute
+  '/watchlist': typeof WatchlistRoute
+  '/company/$id': typeof CompanyIdRoute
+  '/founder/$id': typeof FounderIdRoute
+  '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/grants': typeof GrantsRoute
+  '/me': typeof MeRoute
+  '/watchlist': typeof WatchlistRoute
+  '/company/$id': typeof CompanyIdRoute
+  '/founder/$id': typeof FounderIdRoute
+  '/idea/$id': typeof IdeaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/grants'
+    | '/me'
+    | '/watchlist'
+    | '/company/$id'
+    | '/founder/$id'
+    | '/idea/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/grants'
+    | '/me'
+    | '/watchlist'
+    | '/company/$id'
+    | '/founder/$id'
+    | '/idea/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/grants'
+    | '/me'
+    | '/watchlist'
+    | '/company/$id'
+    | '/founder/$id'
+    | '/idea/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GrantsRoute: typeof GrantsRoute
+  MeRoute: typeof MeRoute
+  WatchlistRoute: typeof WatchlistRoute
+  CompanyIdRoute: typeof CompanyIdRoute
+  FounderIdRoute: typeof FounderIdRoute
+  IdeaIdRoute: typeof IdeaIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/watchlist': {
+      id: '/watchlist'
+      path: '/watchlist'
+      fullPath: '/watchlist'
+      preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/me': {
+      id: '/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grants': {
+      id: '/grants'
+      path: '/grants'
+      fullPath: '/grants'
+      preLoaderRoute: typeof GrantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +151,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/idea/$id': {
+      id: '/idea/$id'
+      path: '/idea/$id'
+      fullPath: '/idea/$id'
+      preLoaderRoute: typeof IdeaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/founder/$id': {
+      id: '/founder/$id'
+      path: '/founder/$id'
+      fullPath: '/founder/$id'
+      preLoaderRoute: typeof FounderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/company/$id': {
+      id: '/company/$id'
+      path: '/company/$id'
+      fullPath: '/company/$id'
+      preLoaderRoute: typeof CompanyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GrantsRoute: GrantsRoute,
+  MeRoute: MeRoute,
+  WatchlistRoute: WatchlistRoute,
+  CompanyIdRoute: CompanyIdRoute,
+  FounderIdRoute: FounderIdRoute,
+  IdeaIdRoute: IdeaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
