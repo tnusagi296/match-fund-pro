@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
+import { Route as CompanyIdRouteImport } from './routes/company.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const FounderIdRoute = FounderIdRouteImport.update({
   path: '/founder/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompanyIdRoute = CompanyIdRouteImport.update({
+  id: '/company/$id',
+  path: '/company/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/founder/$id'
+  fullPaths: '/' | '/company/$id' | '/founder/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/founder/$id'
-  id: '__root__' | '/' | '/founder/$id'
+  to: '/' | '/company/$id' | '/founder/$id'
+  id: '__root__' | '/' | '/company/$id' | '/founder/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompanyIdRoute: typeof CompanyIdRoute
   FounderIdRoute: typeof FounderIdRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FounderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/company/$id': {
+      id: '/company/$id'
+      path: '/company/$id'
+      fullPath: '/company/$id'
+      preLoaderRoute: typeof CompanyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompanyIdRoute: CompanyIdRoute,
   FounderIdRoute: FounderIdRoute,
 }
 export const routeTree = rootRouteImport
