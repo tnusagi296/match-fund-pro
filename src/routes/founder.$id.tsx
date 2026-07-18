@@ -53,7 +53,7 @@ export const Route = createFileRoute("/founder/$id")({
 });
 
 function FounderProfile() {
-  const { founder } = Route.useLoaderData();
+  const { founder } = Route.useLoaderData() as { founder: Founder };
   const company = founder.companyId ? companyById(founder.companyId) : undefined;
 
   return (
