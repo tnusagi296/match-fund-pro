@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
 import { Route as CompanyIdRouteImport } from './routes/company.$id'
+import { Route as AdminDiscoverRouteImport } from './routes/admin.discover'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -74,6 +75,11 @@ const CompanyIdRoute = CompanyIdRouteImport.update({
   path: '/company/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDiscoverRoute = AdminDiscoverRouteImport.update({
+  id: '/admin/discover',
+  path: '/admin/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/discover': typeof AdminDiscoverRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/discover': typeof AdminDiscoverRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/discover': typeof AdminDiscoverRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/discover'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/discover'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/discover'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   WatchlistRoute: typeof WatchlistRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AdminDiscoverRoute: typeof AdminDiscoverRoute
   CompanyIdRoute: typeof CompanyIdRoute
   FounderIdRoute: typeof FounderIdRoute
   IdeaIdRoute: typeof IdeaIdRoute
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/discover': {
+      id: '/admin/discover'
+      path: '/admin/discover'
+      fullPath: '/admin/discover'
+      preLoaderRoute: typeof AdminDiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -329,6 +349,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AdminDiscoverRoute: AdminDiscoverRoute,
   CompanyIdRoute: CompanyIdRoute,
   FounderIdRoute: FounderIdRoute,
   IdeaIdRoute: IdeaIdRoute,
