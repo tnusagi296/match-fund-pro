@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useServerFn } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Loader2, Search, ExternalLink, AlertTriangle, Github } from "lucide-react";
 import { discoverGitHubCandidates } from "@/lib/discovery.functions";
