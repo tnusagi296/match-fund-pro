@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
   AlertCircle,
   ArrowRight,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { FounderCard } from "@/components/matchfund/FounderCard";
+import { ScoreHelpButton } from "@/components/matchfund/ScoreHelp";
 import { discoveredSources, founders, type Founder } from "@/data/matchfund";
 import { previewDiscoveryPlan, startFounderDiscovery } from "@/lib/discovery/discovery.functions";
 import type { DiscoveryPlan, DiscoveryRunSummary } from "@/lib/discovery/types";
@@ -29,6 +31,11 @@ import type {
   RankedGraphFounder,
 } from "@/lib/graph/types";
 import { rankFounders, useThesis, saveThesis, type MatchScore } from "@/lib/thesis";
+import {
+  pipelineService,
+  useInvestorKey,
+  type FounderSnapshot,
+} from "@/services/pipelineService";
 
 export const Route = createFileRoute("/_authenticated/investor/discover")({
   head: () => ({ meta: [{ title: "Discover — MatchFund" }] }),
