@@ -14,6 +14,121 @@ export type Database = {
   }
   public: {
     Tables: {
+      discovery_candidates: {
+        Row: {
+          created_at: string
+          discovery_reasons_json: Json
+          discovery_run_id: string
+          error_summary: string | null
+          founder_graph_entity_id: string | null
+          founder_profile_id: string | null
+          id: string
+          source: string
+          source_identifier: string
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discovery_reasons_json?: Json
+          discovery_run_id: string
+          error_summary?: string | null
+          founder_graph_entity_id?: string | null
+          founder_profile_id?: string | null
+          id?: string
+          source: string
+          source_identifier: string
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discovery_reasons_json?: Json
+          discovery_run_id?: string
+          error_summary?: string | null
+          founder_graph_entity_id?: string | null
+          founder_profile_id?: string | null
+          id?: string
+          source?: string
+          source_identifier?: string
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_candidates_discovery_run_id_fkey"
+            columns: ["discovery_run_id"]
+            isOneToOne: false
+            referencedRelation: "discovery_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_candidates_founder_graph_entity_id_fkey"
+            columns: ["founder_graph_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_candidates_founder_profile_id_fkey"
+            columns: ["founder_profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discovery_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_summary: string | null
+          id: string
+          plan_json: Json
+          queries_json: Json
+          source: string
+          source_results_json: Json
+          started_at: string
+          stats_json: Json
+          status: string
+          thesis_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_summary?: string | null
+          id?: string
+          plan_json?: Json
+          queries_json?: Json
+          source: string
+          source_results_json?: Json
+          started_at?: string
+          stats_json?: Json
+          status: string
+          thesis_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_summary?: string | null
+          id?: string
+          plan_json?: Json
+          queries_json?: Json
+          source?: string
+          source_results_json?: Json
+          started_at?: string
+          stats_json?: Json
+          status?: string
+          thesis_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_profiles: {
         Row: {
           biography: string | null
@@ -36,6 +151,7 @@ export type Database = {
           summary: string | null
           updated_at: string
           verification_status: Database["public"]["Enums"]["profile_verification_status"]
+          visibility_state: Database["public"]["Enums"]["profile_visibility_state"]
         }
         Insert: {
           biography?: string | null
@@ -58,6 +174,7 @@ export type Database = {
           summary?: string | null
           updated_at?: string
           verification_status?: Database["public"]["Enums"]["profile_verification_status"]
+          visibility_state?: Database["public"]["Enums"]["profile_visibility_state"]
         }
         Update: {
           biography?: string | null
@@ -80,6 +197,7 @@ export type Database = {
           summary?: string | null
           updated_at?: string
           verification_status?: Database["public"]["Enums"]["profile_verification_status"]
+          visibility_state?: Database["public"]["Enums"]["profile_visibility_state"]
         }
         Relationships: [
           {
@@ -578,6 +696,7 @@ export type Database = {
       profile_claim_status: "unclaimed" | "pending" | "claimed" | "rejected"
       profile_source_origin: "crawler" | "self_created"
       profile_verification_status: "unverified" | "pending" | "verified"
+      profile_visibility_state: "private" | "discoverable" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -712,6 +831,7 @@ export const Constants = {
       profile_claim_status: ["unclaimed", "pending", "claimed", "rejected"],
       profile_source_origin: ["crawler", "self_created"],
       profile_verification_status: ["unverified", "pending", "verified"],
+      profile_visibility_state: ["private", "discoverable", "published"],
     },
   },
 } as const
