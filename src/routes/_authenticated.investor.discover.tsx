@@ -51,9 +51,6 @@ type RankedDiscovery =
 const WATCHLIST_KEY = "matchfund:watchlist";
 const DECISIONS_KEY = "mf.decisions";
 
-const WATCHLIST_KEY = "matchfund:watchlist";
-const DECISIONS_KEY = "mf.decisions";
-
 function TodayDeck() {
   const [thesis, setThesis, hydrated] = useThesis();
   const userKey = useInvestorKey();
