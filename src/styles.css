@@ -185,7 +185,7 @@
   font-size: 0.875rem;
   font-weight: 500;
 }
-@utility input {
+.input {
   width: 100%;
   border-radius: 0.75rem;
   background: oklch(1 0 0 / 0.05);
@@ -195,6 +195,6 @@
   color: oklch(1 0 0 / 0.95);
   outline: none;
 }
-@utility input:focus {
+.input:focus {
   border-color: var(--mint);
 }
