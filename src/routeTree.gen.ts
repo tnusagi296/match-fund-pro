@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SelectRoleRouteImport } from './routes/select-role'
 import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as MeRouteImport } from './routes/me'
@@ -44,6 +45,11 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SelectRoleRoute = SelectRoleRouteImport.update({
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/me': typeof MeRoute
   '/onboard': typeof OnboardRoute
   '/select-role': typeof SelectRoleRoute
+  '/settings': typeof SettingsRoute
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/me': typeof MeRoute
   '/onboard': typeof OnboardRoute
   '/select-role': typeof SelectRoleRoute
+  '/settings': typeof SettingsRoute
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/me': typeof MeRoute
   '/onboard': typeof OnboardRoute
   '/select-role': typeof SelectRoleRoute
+  '/settings': typeof SettingsRoute
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/onboard'
     | '/select-role'
+    | '/settings'
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/onboard'
     | '/select-role'
+    | '/settings'
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/onboard'
     | '/select-role'
+    | '/settings'
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -411,6 +423,7 @@ export interface RootRouteChildren {
   MeRoute: typeof MeRoute
   OnboardRoute: typeof OnboardRoute
   SelectRoleRoute: typeof SelectRoleRoute
+  SettingsRoute: typeof SettingsRoute
   WatchlistRoute: typeof WatchlistRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -428,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/watchlist'
       fullPath: '/watchlist'
       preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/select-role': {
@@ -720,6 +740,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeRoute: MeRoute,
   OnboardRoute: OnboardRoute,
   SelectRoleRoute: SelectRoleRoute,
+  SettingsRoute: SettingsRoute,
   WatchlistRoute: WatchlistRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
