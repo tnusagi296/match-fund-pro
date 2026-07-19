@@ -14,6 +14,7 @@ import { Route as SelectRoleRouteImport } from './routes/select-role'
 import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
@@ -61,6 +62,11 @@ const MeRoute = MeRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -194,6 +200,7 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
   '/onboard': typeof OnboardRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
   '/onboard': typeof OnboardRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
   '/onboard': typeof OnboardRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/demo'
     | '/mcp'
     | '/me'
     | '/onboard'
@@ -314,6 +324,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/demo'
     | '/mcp'
     | '/me'
     | '/onboard'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/demo'
     | '/mcp'
     | '/me'
     | '/onboard'
@@ -372,6 +384,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DemoRoute: typeof DemoRoute
   McpRoute: typeof McpRoute
   MeRoute: typeof MeRoute
   OnboardRoute: typeof OnboardRoute
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -657,6 +677,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  DemoRoute: DemoRoute,
   McpRoute: McpRoute,
   MeRoute: MeRoute,
   OnboardRoute: OnboardRoute,
