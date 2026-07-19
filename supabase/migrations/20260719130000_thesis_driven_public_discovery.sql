@@ -3,26 +3,48 @@
 -- candidate was evaluated; they are deliberately not graph evidence.
 
 ALTER TABLE public.founder_profiles
-  ADD COLUMN profile_origin text NOT NULL DEFAULT 'founder_submission',
-  ADD COLUMN claim_status text NOT NULL DEFAULT 'self_submitted',
-  ADD COLUMN visibility_state text NOT NULL DEFAULT 'private';
+  ADD COLUMN IF NOT EXISTS profile_origin text NOT NULL DEFAULT 'founder_submission',
+  ADD COLUMN IF NOT EXISTS claim_status text NOT NULL DEFAULT 'self_submitted',
+  ADD COLUMN IF NOT EXISTS visibility_state text NOT NULL DEFAULT 'private';
+
+ALTER TABLE public.founder_profiles
+  ALTER COLUMN profile_origin SET DEFAULT 'founder_submission',
+  ALTER COLUMN claim_status SET DEFAULT 'self_submitted',
+  ALTER COLUMN visibility_state SET DEFAULT 'private';
+
+ALTER TABLE public.founder_profiles
+  DROP CONSTRAINT IF EXISTS founder_profiles_profile_origin_check,
+  DROP CONSTRAINT IF EXISTS founder_profiles_claim_status_check,
+  DROP CONSTRAINT IF EXISTS founder_profiles_visibility_state_check;
 
 ALTER TABLE public.founder_profiles
   ADD CONSTRAINT founder_profiles_profile_origin_check CHECK (
-    profile_origin IN ('public_scan', 'founder_submission', 'demo')
+    profile_origin::text IN (
+      'crawler',
+      'self_created',
+      'public_scan',
+      'founder_submission',
+      'demo'
+    )
   ),
   ADD CONSTRAINT founder_profiles_claim_status_check CHECK (
-    claim_status IN ('unclaimed', 'self_submitted', 'claimed')
+    claim_status::text IN (
+      'unclaimed',
+      'pending',
+      'self_submitted',
+      'claimed',
+      'rejected'
+    )
   ),
   ADD CONSTRAINT founder_profiles_visibility_state_check CHECK (
-    visibility_state IN ('private', 'discoverable', 'published')
+    visibility_state::text IN ('private', 'discoverable', 'published')
   );
 
 UPDATE public.founder_profiles
 SET visibility_state = 'published'
 WHERE published = true;
 
-CREATE TABLE public.discovery_runs (
+CREATE TABLE IF NOT EXISTS public.discovery_runs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   thesis_id text NOT NULL,
   source text NOT NULL CHECK (source IN ('github')),
@@ -39,7 +61,7 @@ CREATE TABLE public.discovery_runs (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.discovery_candidates (
+CREATE TABLE IF NOT EXISTS public.discovery_candidates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   discovery_run_id uuid NOT NULL REFERENCES public.discovery_runs(id) ON DELETE CASCADE,
   source text NOT NULL CHECK (source IN ('github')),
@@ -61,21 +83,59 @@ CREATE TABLE public.discovery_candidates (
   )
 );
 
-CREATE INDEX discovery_runs_thesis_created_at_idx
+ALTER TABLE public.discovery_runs
+  DROP CONSTRAINT IF EXISTS discovery_runs_source_check,
+  DROP CONSTRAINT IF EXISTS discovery_runs_status_check;
+
+ALTER TABLE public.discovery_runs
+  ADD CONSTRAINT discovery_runs_source_check CHECK (source IN ('github')),
+  ADD CONSTRAINT discovery_runs_status_check CHECK (
+    status IN ('planned', 'running', 'completed', 'partial', 'failed')
+  );
+
+ALTER TABLE public.discovery_candidates
+  DROP CONSTRAINT IF EXISTS discovery_candidates_source_check,
+  DROP CONSTRAINT IF EXISTS discovery_candidates_status_check;
+
+ALTER TABLE public.discovery_candidates
+  ADD CONSTRAINT discovery_candidates_source_check CHECK (source IN ('github')),
+  ADD CONSTRAINT discovery_candidates_status_check CHECK (
+    status IN ('discovered', 'ingested', 'skipped', 'failed')
+  );
+
+CREATE INDEX IF NOT EXISTS discovery_runs_thesis_created_at_idx
   ON public.discovery_runs(thesis_id, created_at DESC);
-CREATE INDEX discovery_candidates_source_identifier_idx
+CREATE INDEX IF NOT EXISTS discovery_candidates_source_identifier_idx
   ON public.discovery_candidates(source, source_identifier);
-CREATE INDEX discovery_candidates_graph_entity_idx
+CREATE INDEX IF NOT EXISTS discovery_candidates_graph_entity_idx
   ON public.discovery_candidates(founder_graph_entity_id)
   WHERE founder_graph_entity_id IS NOT NULL;
 
-CREATE TRIGGER update_discovery_runs_updated_at
-  BEFORE UPDATE ON public.discovery_runs
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid = 'public.discovery_runs'::regclass
+      AND tgname IN ('discovery_runs_updated_at', 'update_discovery_runs_updated_at')
+      AND NOT tgisinternal
+  ) THEN
+    CREATE TRIGGER update_discovery_runs_updated_at
+      BEFORE UPDATE ON public.discovery_runs
+      FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
 
-CREATE TRIGGER update_discovery_candidates_updated_at
-  BEFORE UPDATE ON public.discovery_candidates
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid = 'public.discovery_candidates'::regclass
+      AND tgname IN ('discovery_candidates_updated_at', 'update_discovery_candidates_updated_at')
+      AND NOT tgisinternal
+  ) THEN
+    CREATE TRIGGER update_discovery_candidates_updated_at
+      BEFORE UPDATE ON public.discovery_candidates
+      FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
+END;
+$$;
 
 GRANT ALL ON public.discovery_runs TO service_role;
 GRANT ALL ON public.discovery_candidates TO service_role;

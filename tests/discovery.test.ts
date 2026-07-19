@@ -104,6 +104,24 @@ describe("DiscoveryPlanner", () => {
 });
 
 describe("GitHubDiscoveryAdapter", () => {
+  test("preserves the runtime fetch receiver when no injected fetch is provided", async () => {
+    const originalFetch = globalThis.fetch;
+    let usedCorrectReceiver = false;
+    globalThis.fetch = function (this: unknown) {
+      if (this !== undefined) throw new TypeError("Illegal invocation");
+      usedCorrectReceiver = true;
+      return searchFixtureFetch();
+    } as typeof fetch;
+
+    try {
+      const result = await new GitHubDiscoveryAdapter().discover(oneQueryPlan());
+      expect(result.candidates).toHaveLength(1);
+      expect(usedCorrectReceiver).toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   test("turns individual repository owners into candidates and deduplicates by numeric user ID", async () => {
     const adapter = new GitHubDiscoveryAdapter({
       fetchImpl: searchFixtureFetch as typeof fetch,

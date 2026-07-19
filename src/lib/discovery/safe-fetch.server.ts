@@ -1,4 +1,5 @@
 import { lookup } from "node:dns/promises";
+import { runtimeFetch } from "@/lib/runtime-fetch";
 import { DISCOVERY_LIMITS } from "./types";
 import { canonicalHttpsUrl, isPublicNetworkUrl } from "./source-utils.server";
 
@@ -46,7 +47,7 @@ async function fetchBounded(
   options: SafeFetchOptions,
   accept: string,
 ): Promise<{ response: Response; body: Uint8Array; canonicalUrl: string }> {
-  const fetchImpl = options.fetchImpl ?? fetch;
+  const fetchImpl = options.fetchImpl ?? runtimeFetch;
   const maxBytes = options.maxBytes ?? DISCOVERY_LIMITS.maxWebsiteResponseBytes;
   const maxRedirects = options.maxRedirects ?? DISCOVERY_LIMITS.maxRedirects;
   let current = canonicalHttpsUrl(input);

@@ -104,7 +104,7 @@ ALTER TABLE public.discovery_runs
       'disabled_unconfigured'
     )
   ),
-  ADD COLUMN source_results_json jsonb NOT NULL DEFAULT '[]'::jsonb;
+  ADD COLUMN IF NOT EXISTS source_results_json jsonb NOT NULL DEFAULT '[]'::jsonb;
 
 ALTER TABLE public.discovery_candidates
   DROP CONSTRAINT IF EXISTS discovery_candidates_source_check;
@@ -114,7 +114,7 @@ ALTER TABLE public.discovery_candidates
     source IN ('github', 'hackathon', 'accelerator', 'german_register')
   );
 
-CREATE TABLE public.graph_entity_resolution_candidates (
+CREATE TABLE IF NOT EXISTS public.graph_entity_resolution_candidates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   left_entity_id uuid NOT NULL REFERENCES public.graph_entities(id) ON DELETE CASCADE,
   right_entity_id uuid NOT NULL REFERENCES public.graph_entities(id) ON DELETE CASCADE,
@@ -127,9 +127,33 @@ CREATE TABLE public.graph_entity_resolution_candidates (
   CONSTRAINT graph_entity_resolution_pair_unique UNIQUE (left_entity_id, right_entity_id)
 );
 
-CREATE TRIGGER update_graph_entity_resolution_candidates_updated_at
-  BEFORE UPDATE ON public.graph_entity_resolution_candidates
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+ALTER TABLE public.graph_entity_resolution_candidates
+  DROP CONSTRAINT IF EXISTS graph_entity_resolution_candidates_status_check,
+  DROP CONSTRAINT IF EXISTS graph_entity_resolution_distinct;
+
+ALTER TABLE public.graph_entity_resolution_candidates
+  ADD CONSTRAINT graph_entity_resolution_candidates_status_check CHECK (
+    status IN ('possible', 'rejected', 'merged')
+  ),
+  ADD CONSTRAINT graph_entity_resolution_distinct CHECK (left_entity_id <> right_entity_id);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid = 'public.graph_entity_resolution_candidates'::regclass
+      AND tgname IN (
+        'graph_entity_resolution_candidates_updated_at',
+        'update_graph_entity_resolution_candidates_updated_at'
+      )
+      AND NOT tgisinternal
+  ) THEN
+    CREATE TRIGGER update_graph_entity_resolution_candidates_updated_at
+      BEFORE UPDATE ON public.graph_entity_resolution_candidates
+      FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
+END;
+$$;
 
 GRANT ALL ON public.graph_entity_resolution_candidates TO service_role;
 ALTER TABLE public.graph_entity_resolution_candidates ENABLE ROW LEVEL SECURITY;

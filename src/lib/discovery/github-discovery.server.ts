@@ -1,4 +1,5 @@
 import type { GitHubRepositorySeed } from "@/lib/graph/github-graph.server";
+import { runtimeFetch } from "@/lib/runtime-fetch";
 import type { Thesis } from "@/lib/thesis";
 import { DiscoveryPlanner } from "./planner.server";
 import {
@@ -100,7 +101,7 @@ export class GitHubDiscoveryAdapter implements DiscoveryAdapter {
   private readonly token?: string;
 
   constructor(options: GitHubDiscoveryAdapterOptions = {}) {
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = options.fetchImpl ?? runtimeFetch;
     this.token = options.token;
   }
 

@@ -19,6 +19,17 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
+const POSTGREST_IN_BATCH_SIZE = 100;
+
+function batches(values: string[]): string[][] {
+  const deduplicated = unique(values);
+  const result: string[][] = [];
+  for (let index = 0; index < deduplicated.length; index += POSTGREST_IN_BATCH_SIZE) {
+    result.push(deduplicated.slice(index, index + POSTGREST_IN_BATCH_SIZE));
+  }
+  return result;
+}
+
 export async function loadDiscoverableGraphFounderCards(
   injectedClient?: SupabaseClient<Database>,
 ): Promise<GraphFounderCard[]> {
@@ -122,25 +133,25 @@ export async function loadDiscoverableGraphFounderCards(
   assertNoError(claimError, "claim query");
 
   const relationshipIds = relationshipRows.map((relationship) => relationship.id);
-  let relationshipEvidenceRows: Array<{ relationship_id: string; evidence_id: string }> = [];
-  if (relationshipIds.length > 0) {
+  const relationshipEvidenceRows: Array<{ relationship_id: string; evidence_id: string }> = [];
+  for (const relationshipIdBatch of batches(relationshipIds)) {
     const result = await client
       .from("graph_relationship_evidence")
       .select("relationship_id,evidence_id")
-      .in("relationship_id", relationshipIds);
+      .in("relationship_id", relationshipIdBatch);
     assertNoError(result.error, "relationship evidence-link query");
-    relationshipEvidenceRows = result.data ?? [];
+    relationshipEvidenceRows.push(...(result.data ?? []));
   }
 
   const claimIds = (claimRows ?? []).map((claim) => claim.id);
-  let claimEvidenceRows: Array<{ claim_id: string; evidence_id: string }> = [];
-  if (claimIds.length > 0) {
+  const claimEvidenceRows: Array<{ claim_id: string; evidence_id: string }> = [];
+  for (const claimIdBatch of batches(claimIds)) {
     const result = await client
       .from("graph_claim_evidence")
       .select("claim_id,evidence_id")
-      .in("claim_id", claimIds);
+      .in("claim_id", claimIdBatch);
     assertNoError(result.error, "claim evidence-link query");
-    claimEvidenceRows = result.data ?? [];
+    claimEvidenceRows.push(...(result.data ?? []));
   }
 
   const evidenceIds = unique([

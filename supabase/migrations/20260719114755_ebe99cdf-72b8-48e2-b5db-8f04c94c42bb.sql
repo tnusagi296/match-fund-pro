@@ -29,9 +29,21 @@ CREATE TRIGGER user_profiles_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- 2) founder_profiles: ownership + claim/verification lifecycle
-CREATE TYPE public.profile_claim_status AS ENUM ('unclaimed', 'pending', 'claimed', 'rejected');
+CREATE TYPE public.profile_claim_status AS ENUM (
+  'unclaimed',
+  'pending',
+  'claimed',
+  'rejected',
+  'self_submitted'
+);
 CREATE TYPE public.profile_verification_status AS ENUM ('unverified', 'pending', 'verified');
-CREATE TYPE public.profile_source_origin AS ENUM ('crawler', 'self_created');
+CREATE TYPE public.profile_source_origin AS ENUM (
+  'crawler',
+  'self_created',
+  'public_scan',
+  'founder_submission',
+  'demo'
+);
 
 ALTER TABLE public.founder_profiles
   ADD COLUMN IF NOT EXISTS owner_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -41,6 +53,68 @@ ALTER TABLE public.founder_profiles
   ADD COLUMN IF NOT EXISTS company_name text,
   ADD COLUMN IF NOT EXISTS location text,
   ADD COLUMN IF NOT EXISTS biography text;
+
+ALTER TABLE public.founder_profiles
+  DROP CONSTRAINT IF EXISTS founder_profiles_profile_origin_check,
+  DROP CONSTRAINT IF EXISTS founder_profiles_claim_status_check;
+
+-- The graph prototype originally stored provenance and claim lifecycle as
+-- constrained text. Preserve its values while converging on the enum schema.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'founder_profiles'
+      AND column_name = 'profile_origin'
+      AND udt_name <> 'profile_source_origin'
+  ) THEN
+    ALTER TABLE public.founder_profiles ALTER COLUMN profile_origin DROP DEFAULT;
+    ALTER TABLE public.founder_profiles
+      ALTER COLUMN profile_origin TYPE public.profile_source_origin
+      USING profile_origin::text::public.profile_source_origin;
+    ALTER TABLE public.founder_profiles
+      ALTER COLUMN profile_origin SET DEFAULT 'crawler'::public.profile_source_origin;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'founder_profiles'
+      AND column_name = 'claim_status'
+      AND udt_name <> 'profile_claim_status'
+  ) THEN
+    ALTER TABLE public.founder_profiles ALTER COLUMN claim_status DROP DEFAULT;
+    ALTER TABLE public.founder_profiles
+      ALTER COLUMN claim_status TYPE public.profile_claim_status
+      USING claim_status::text::public.profile_claim_status;
+    ALTER TABLE public.founder_profiles
+      ALTER COLUMN claim_status SET DEFAULT 'unclaimed'::public.profile_claim_status;
+  END IF;
+END;
+$$;
+
+ALTER TABLE public.founder_profiles
+  ADD CONSTRAINT founder_profiles_profile_origin_check CHECK (
+    profile_origin::text IN (
+      'crawler',
+      'self_created',
+      'public_scan',
+      'founder_submission',
+      'demo'
+    )
+  ),
+  ADD CONSTRAINT founder_profiles_claim_status_check CHECK (
+    claim_status::text IN (
+      'unclaimed',
+      'pending',
+      'self_submitted',
+      'claimed',
+      'rejected'
+    )
+  );
 
 CREATE UNIQUE INDEX IF NOT EXISTS founder_profiles_owner_unique
   ON public.founder_profiles(owner_user_id) WHERE owner_user_id IS NOT NULL;

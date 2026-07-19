@@ -1,5 +1,6 @@
 import { isIP } from "node:net";
 import { z } from "zod";
+import { runtimeFetch } from "@/lib/runtime-fetch";
 import type {
   GraphClaimInput,
   GraphEntityInput,
@@ -753,7 +754,7 @@ export class HackathonEvidenceAdapter {
   private readonly validateDns: boolean;
 
   constructor(options: HackathonEvidenceAdapterOptions = {}) {
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = options.fetchImpl ?? runtimeFetch;
     this.now = options.now ?? (() => new Date());
     this.aiExtractor = options.aiExtractor ?? defaultAiExtractor;
     this.useAi = options.useAi ?? true;

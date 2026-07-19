@@ -5,6 +5,7 @@ import type {
   GraphIngestionResult,
   GraphRelationshipInput,
 } from "./types";
+import { runtimeFetch } from "@/lib/runtime-fetch";
 
 const GITHUB_API = "https://api.github.com";
 const GITHUB_HOSTS = new Set(["github.com", "www.github.com"]);
@@ -162,10 +163,7 @@ export class GitHubGraphAdapter {
   private readonly now: () => Date;
 
   constructor(options: GitHubGraphAdapterOptions = {}) {
-    // Bind to globalThis: assigning global `fetch` to an instance property and
-    // later calling it as `this.fetchImpl(...)` throws "Illegal invocation" in
-    // some runtimes because `fetch` loses its receiver.
-    this.fetchImpl = options.fetchImpl ?? fetch.bind(globalThis);
+    this.fetchImpl = options.fetchImpl ?? runtimeFetch;
     this.token = options.token;
     this.now = options.now ?? (() => new Date());
   }
