@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       founder_profiles: {
         Row: {
+          biography: string | null
+          claim_status: Database["public"]["Enums"]["profile_claim_status"]
+          company_name: string | null
           created_at: string
           deck_url: string | null
           github: string | null
@@ -23,14 +26,21 @@ export type Database = {
           headline: string
           id: string
           linkedin: string | null
+          location: string | null
           name: string
+          owner_user_id: string | null
+          profile_origin: Database["public"]["Enums"]["profile_source_origin"]
           published: boolean
           scores: Json
           site: string | null
           summary: string | null
           updated_at: string
+          verification_status: Database["public"]["Enums"]["profile_verification_status"]
         }
         Insert: {
+          biography?: string | null
+          claim_status?: Database["public"]["Enums"]["profile_claim_status"]
+          company_name?: string | null
           created_at?: string
           deck_url?: string | null
           github?: string | null
@@ -38,14 +48,21 @@ export type Database = {
           headline?: string
           id?: string
           linkedin?: string | null
+          location?: string | null
           name?: string
+          owner_user_id?: string | null
+          profile_origin?: Database["public"]["Enums"]["profile_source_origin"]
           published?: boolean
           scores?: Json
           site?: string | null
           summary?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["profile_verification_status"]
         }
         Update: {
+          biography?: string | null
+          claim_status?: Database["public"]["Enums"]["profile_claim_status"]
+          company_name?: string | null
           created_at?: string
           deck_url?: string | null
           github?: string | null
@@ -53,12 +70,16 @@ export type Database = {
           headline?: string
           id?: string
           linkedin?: string | null
+          location?: string | null
           name?: string
+          owner_user_id?: string | null
+          profile_origin?: Database["public"]["Enums"]["profile_source_origin"]
           published?: boolean
           scores?: Json
           site?: string | null
           summary?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["profile_verification_status"]
         }
         Relationships: [
           {
@@ -379,6 +400,166 @@ export type Database = {
           },
         ]
       }
+      investor_founder_actions: {
+        Row: {
+          created_at: string
+          founder_profile_id: string
+          id: string
+          investor_user_id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["investor_action_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          founder_profile_id: string
+          id?: string
+          investor_user_id: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["investor_action_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          founder_profile_id?: string
+          id?: string
+          investor_user_id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["investor_action_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_founder_actions_founder_profile_id_fkey"
+            columns: ["founder_profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_theses: {
+        Row: {
+          check_max: number | null
+          check_min: number | null
+          created_at: string
+          geographies: string[]
+          id: string
+          investor_user_id: string
+          sectors: string[]
+          signals: string[]
+          stages: string[]
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          check_max?: number | null
+          check_min?: number | null
+          created_at?: string
+          geographies?: string[]
+          id?: string
+          investor_user_id: string
+          sectors?: string[]
+          signals?: string[]
+          stages?: string[]
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          check_max?: number | null
+          check_min?: number | null
+          created_at?: string
+          geographies?: string[]
+          id?: string
+          investor_user_id?: string
+          sectors?: string[]
+          signals?: string[]
+          stages?: string[]
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
+      profile_claims: {
+        Row: {
+          created_at: string
+          evidence: Json
+          founder_profile_id: string
+          id: string
+          requesting_user_id: string
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["claim_request_status"]
+          submitted_at: string
+          updated_at: string
+          verification_method: Database["public"]["Enums"]["claim_verification_method"]
+        }
+        Insert: {
+          created_at?: string
+          evidence?: Json
+          founder_profile_id: string
+          id?: string
+          requesting_user_id: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["claim_request_status"]
+          submitted_at?: string
+          updated_at?: string
+          verification_method?: Database["public"]["Enums"]["claim_verification_method"]
+        }
+        Update: {
+          created_at?: string
+          evidence?: Json
+          founder_profile_id?: string
+          id?: string
+          requesting_user_id?: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["claim_request_status"]
+          submitted_at?: string
+          updated_at?: string
+          verification_method?: Database["public"]["Enums"]["claim_verification_method"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_claims_founder_profile_id_fkey"
+            columns: ["founder_profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          account_role: Database["public"]["Enums"]["account_role"]
+          created_at: string
+          email: string | null
+          full_name: string | null
+          fund_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_role?: Database["public"]["Enums"]["account_role"]
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          fund_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_role?: Database["public"]["Enums"]["account_role"]
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          fund_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -390,7 +571,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      account_role: "investor" | "founder" | "admin"
+      claim_request_status: "pending" | "approved" | "rejected"
+      claim_verification_method: "email" | "github" | "website" | "manual"
+      investor_action_status: "monitoring" | "shortlisted" | "passed"
+      profile_claim_status: "unclaimed" | "pending" | "claimed" | "rejected"
+      profile_source_origin: "crawler" | "self_created"
+      profile_verification_status: "unverified" | "pending" | "verified"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -517,6 +704,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_role: ["investor", "founder", "admin"],
+      claim_request_status: ["pending", "approved", "rejected"],
+      claim_verification_method: ["email", "github", "website", "manual"],
+      investor_action_status: ["monitoring", "shortlisted", "passed"],
+      profile_claim_status: ["unclaimed", "pending", "claimed", "rejected"],
+      profile_source_origin: ["crawler", "self_created"],
+      profile_verification_status: ["unverified", "pending", "verified"],
+    },
   },
 } as const
