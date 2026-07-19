@@ -54,7 +54,8 @@ type CrawlState =
       profileId: string;
       alreadyPublished: boolean;
     }
-  | { kind: "error" };
+  | { kind: "timeout"; requestId: string }
+  | { kind: "error"; requestId?: string; reason: "network" | "server" | "invalid_response" };
 
 function FounderProfileEditor() {
   const draft = useDraft<FounderDraft>("founder_profile", INITIAL);
