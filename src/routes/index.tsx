@@ -46,9 +46,9 @@ function TodayDeck() {
   const [graphLoading, setGraphLoading] = useState(true);
   const [graphError, setGraphError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (hydrated && !thesis) navigate({ to: "/onboard" });
-  }, [hydrated, thesis, navigate]);
+  // Do NOT auto-redirect. Show a proper "missing thesis" state so investors
+  // can also try demo matches without setting a thesis first.
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
