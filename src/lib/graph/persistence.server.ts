@@ -674,7 +674,7 @@ export async function createOrUpdateFounderProfile(
     };
     const { data, error } = await supabaseAdmin
       .from("founder_profiles")
-      .update({ ...values, ...provenance })
+      .update({ ...values, ...provenance } as never)
       .eq("id", existingProfile.id)
       .select("id,published")
       .single();
@@ -689,9 +689,10 @@ export async function createOrUpdateFounderProfile(
       profile_origin: profileOrigin,
       claim_status: claimStatus,
       visibility_state: visibilityState,
-    })
+    } as never)
     .select("id,published")
     .single();
+
   if (error) throw error;
   return data;
 }
