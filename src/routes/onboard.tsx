@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Search, Sparkles, Target } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Search, Sparkles, Target } from "lucide-react";
 import {
   DEFAULT_THESIS,
   GEO_OPTIONS,
@@ -13,6 +13,7 @@ import {
 } from "@/lib/thesis";
 import type { Sector } from "@/data/matchfund";
 import { z } from "zod";
+import { useDraft, deleteServerDraft } from "@/lib/drafts";
 
 const searchSchema = z.object({
   return: z.enum(["settings"]).optional(),
@@ -30,26 +31,39 @@ function OnboardPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/onboard" });
   const isEditing = search.return === "settings";
-  const [step, setStep] = useState(0);
-  const [thesis, setThesis] = useState<Thesis>(DEFAULT_THESIS);
+  // Server-persisted draft for the investor thesis wizard.
+  const draft = useDraft<{ thesis: Thesis }>("investor_thesis", { thesis: DEFAULT_THESIS });
+  const step = draft.step;
+  const setStep = (s: number) => draft.setStep(s);
+  const thesis = draft.payload.thesis ?? DEFAULT_THESIS;
+  const setThesis = (updater: Thesis | ((prev: Thesis) => Thesis)) =>
+    draft.setPayload((p) => ({
+      ...p,
+      thesis: typeof updater === "function" ? (updater as (prev: Thesis) => Thesis)(p.thesis ?? DEFAULT_THESIS) : updater,
+    }));
 
-  // Preload the existing thesis so edits don't reset selections.
+  // Preload the existing committed thesis so edits start from the last saved copy.
   useEffect(() => {
+    if (draft.restored) return;
     const existing = loadThesis();
     if (existing) setThesis(existing);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.restored]);
 
   const toggle = <T,>(arr: T[], v: T): T[] =>
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   const finish = () => {
-    // Preserve counters and coach-mark state on edit; only reset on first setup.
+    // Committing the thesis is a separate step from saving a draft.
     const existing = loadThesis();
     saveThesis({
       ...thesis,
       seenCoachMark: existing?.seenCoachMark ?? false,
       swipeCount: existing?.swipeCount ?? 0,
     });
+    // Once committed, the draft is done — clear it so we don't restore stale
+    // wizard state next time the user comes back.
+    void deleteServerDraft("investor_thesis");
     if (isEditing) {
       toast.success("Your investment thesis has been updated.");
       navigate({ to: "/settings" });
@@ -64,6 +78,7 @@ function OnboardPage() {
     (step === 1 && thesis.sectors.length > 0) ||
     step === 2 ||
     step === 3;
+
 
   return (
     <div className="relative min-h-screen bg-aurora text-foreground">
