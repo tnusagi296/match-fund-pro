@@ -8,6 +8,7 @@ export type Database = {
     Tables: {
       founder_profiles: {
         Row: {
+          claim_status: string;
           created_at: string;
           deck_url: string | null;
           github: string | null;
@@ -16,13 +17,16 @@ export type Database = {
           id: string;
           linkedin: string | null;
           name: string;
+          profile_origin: string;
           published: boolean;
           scores: Json;
           site: string | null;
           summary: string | null;
           updated_at: string;
+          visibility_state: string;
         };
         Insert: {
+          claim_status?: string;
           created_at?: string;
           deck_url?: string | null;
           github?: string | null;
@@ -31,13 +35,16 @@ export type Database = {
           id?: string;
           linkedin?: string | null;
           name?: string;
+          profile_origin?: string;
           published?: boolean;
           scores?: Json;
           site?: string | null;
           summary?: string | null;
           updated_at?: string;
+          visibility_state?: string;
         };
         Update: {
+          claim_status?: string;
           created_at?: string;
           deck_url?: string | null;
           github?: string | null;
@@ -46,11 +53,13 @@ export type Database = {
           id?: string;
           linkedin?: string | null;
           name?: string;
+          profile_origin?: string;
           published?: boolean;
           scores?: Json;
           site?: string | null;
           summary?: string | null;
           updated_at?: string;
+          visibility_state?: string;
         };
         Relationships: [
           {
@@ -105,6 +114,121 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      discovery_candidates: {
+        Row: {
+          created_at: string;
+          discovery_reasons_json: Json;
+          discovery_run_id: string;
+          error_summary: string | null;
+          founder_graph_entity_id: string | null;
+          founder_profile_id: string | null;
+          id: string;
+          source: string;
+          source_identifier: string;
+          source_url: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          discovery_reasons_json?: Json;
+          discovery_run_id: string;
+          error_summary?: string | null;
+          founder_graph_entity_id?: string | null;
+          founder_profile_id?: string | null;
+          id?: string;
+          source: string;
+          source_identifier: string;
+          source_url: string;
+          status: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          discovery_reasons_json?: Json;
+          discovery_run_id?: string;
+          error_summary?: string | null;
+          founder_graph_entity_id?: string | null;
+          founder_profile_id?: string | null;
+          id?: string;
+          source?: string;
+          source_identifier?: string;
+          source_url?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "discovery_candidates_discovery_run_id_fkey";
+            columns: ["discovery_run_id"];
+            isOneToOne: false;
+            referencedRelation: "discovery_runs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "discovery_candidates_founder_graph_entity_id_fkey";
+            columns: ["founder_graph_entity_id"];
+            isOneToOne: false;
+            referencedRelation: "graph_entities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "discovery_candidates_founder_profile_id_fkey";
+            columns: ["founder_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "founder_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      discovery_runs: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          error_summary: string | null;
+          id: string;
+          plan_json: Json;
+          queries_json: Json;
+          source: string;
+          source_results_json: Json;
+          started_at: string | null;
+          stats_json: Json;
+          status: string;
+          thesis_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          error_summary?: string | null;
+          id?: string;
+          plan_json?: Json;
+          queries_json?: Json;
+          source: string;
+          source_results_json?: Json;
+          started_at?: string | null;
+          stats_json?: Json;
+          status: string;
+          thesis_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          error_summary?: string | null;
+          id?: string;
+          plan_json?: Json;
+          queries_json?: Json;
+          source?: string;
+          source_results_json?: Json;
+          started_at?: string | null;
+          stats_json?: Json;
+          status?: string;
+          thesis_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       graph_claim_evidence: {
         Row: {
@@ -233,6 +357,54 @@ export type Database = {
           {
             foreignKeyName: "graph_entity_identifiers_entity_id_fkey";
             columns: ["entity_id"];
+            isOneToOne: false;
+            referencedRelation: "graph_entities";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      graph_entity_resolution_candidates: {
+        Row: {
+          created_at: string;
+          id: string;
+          identifiers_json: Json;
+          left_entity_id: string;
+          reason: string;
+          right_entity_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          identifiers_json?: Json;
+          left_entity_id: string;
+          reason: string;
+          right_entity_id: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          identifiers_json?: Json;
+          left_entity_id?: string;
+          reason?: string;
+          right_entity_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "graph_entity_resolution_candidates_left_entity_id_fkey";
+            columns: ["left_entity_id"];
+            isOneToOne: false;
+            referencedRelation: "graph_entities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "graph_entity_resolution_candidates_right_entity_id_fkey";
+            columns: ["right_entity_id"];
             isOneToOne: false;
             referencedRelation: "graph_entities";
             referencedColumns: ["id"];

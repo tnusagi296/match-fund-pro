@@ -5,10 +5,14 @@ import type {
   GraphClaimInput,
   GraphEntityInput,
   GraphEvidenceInput,
+  GraphFragmentPersistenceResult,
   GraphIdentifierInput,
   GraphIngestionResult,
   GraphPersistenceResult,
   GraphRelationshipInput,
+  ProfileClaimStatus,
+  ProfileOrigin,
+  ProfileVisibilityState,
 } from "./types";
 
 type PersistedRecord = { id: string; created: boolean };
@@ -27,6 +31,12 @@ export interface GraphPersistenceStore {
   upsertClaim(claim: GraphClaimInput, subjectEntityId: string): Promise<PersistedRecord>;
   linkClaimEvidence(claimId: string, evidenceId: string): Promise<void>;
   linkProfile(profileId: string, founderEntityId: string): Promise<void>;
+  recordPossibleResolution?(
+    leftEntityId: string,
+    rightEntityId: string,
+    reason: string,
+    identifiers: GraphIdentifierInput[],
+  ): Promise<void>;
 }
 
 export class GraphPersistenceError extends Error {
@@ -62,17 +72,10 @@ function requireResolved(map: Map<string, string>, tempId: string, kind: string)
   return id;
 }
 
-export async function persistGraphIngestionWithStore(
+export async function persistGraphFragmentWithStore(
   store: GraphPersistenceStore,
   result: GraphIngestionResult,
-  profileId: string,
-): Promise<GraphPersistenceResult> {
-  const founder = result.entities.find((entity) => entity.entityType === "founder");
-  if (!founder) throw new Error("The graph adapter did not return a founder entity.");
-  if (result.entities.filter((entity) => entity.entityType === "founder").length !== 1) {
-    throw new Error("A graph ingestion result must contain exactly one founder entity.");
-  }
-
+): Promise<GraphFragmentPersistenceResult> {
   const completed = { entities: 0, evidence: 0, relationships: 0, claims: 0 };
   let stage = "entity upsert";
   const entityIds = new Map<string, string>();
@@ -86,6 +89,19 @@ export async function persistGraphIngestionWithStore(
         if (match) identifierMatches.add(match);
       }
       if (identifierMatches.size > 1) {
+        const matchedIds = [...identifierMatches].sort();
+        if (store.recordPossibleResolution) {
+          for (let left = 0; left < matchedIds.length; left += 1) {
+            for (let right = left + 1; right < matchedIds.length; right += 1) {
+              await store.recordPossibleResolution(
+                matchedIds[left],
+                matchedIds[right],
+                `Stable identifiers supplied for ${entity.tempId} resolve to different entities.`,
+                entity.identifiers,
+              );
+            }
+          }
+        }
         throw new Error(`Stable identifiers for ${entity.tempId} resolve to different entities.`);
       }
       const existingId = identifierMatches.values().next().value ?? null;
@@ -97,12 +113,6 @@ export async function persistGraphIngestionWithStore(
         await store.upsertIdentifier(persisted.id, identifier);
       }
     }
-
-    const founderEntityId = requireResolved(entityIds, founder.tempId, "Founder entity");
-    await store.upsertIdentifier(founderEntityId, {
-      scheme: "matchfund_profile_id",
-      value: profileId,
-    });
 
     stage = "evidence upsert";
     for (const item of result.evidence) {
@@ -138,17 +148,14 @@ export async function persistGraphIngestionWithStore(
       }
     }
 
-    stage = "founder profile link";
-    await store.linkProfile(profileId, founderEntityId);
-
     const lastUpdated = result.evidence.reduce(
       (latest, item) => (item.retrievedAt > latest ? item.retrievedAt : latest),
       new Date(0).toISOString(),
     );
 
     return {
-      founderEntityId,
-      profileId,
+      entityIds: Object.fromEntries(entityIds),
+      evidenceIds: Object.fromEntries(evidenceIds),
       summary: {
         repositoriesFound: result.entities.filter((entity) => entity.entityType === "repository")
           .length,
@@ -170,7 +177,47 @@ export async function persistGraphIngestionWithStore(
   }
 }
 
-class SupabaseGraphStore implements GraphPersistenceStore {
+export async function persistGraphIngestionWithStore(
+  store: GraphPersistenceStore,
+  result: GraphIngestionResult,
+  profileId: string,
+): Promise<GraphPersistenceResult> {
+  const founders = result.entities.filter((entity) => entity.entityType === "founder");
+  if (founders.length !== 1) {
+    throw new Error("A founder profile ingestion must contain exactly one founder entity.");
+  }
+
+  const persisted = await persistGraphFragmentWithStore(store, result);
+  const founderEntityId = persisted.entityIds[founders[0].tempId];
+  if (!founderEntityId) throw new Error("The persisted founder entity could not be resolved.");
+
+  try {
+    await store.upsertIdentifier(founderEntityId, {
+      scheme: "matchfund_profile_id",
+      value: profileId,
+    });
+    await store.linkProfile(profileId, founderEntityId);
+  } catch (error) {
+    throw new GraphPersistenceError(
+      "founder profile link",
+      {
+        entities: persisted.summary.entitiesCreated,
+        evidence: persisted.summary.evidenceCreated,
+        relationships: persisted.summary.relationshipsCreated,
+        claims: persisted.summary.claimsCreated,
+      },
+      error,
+    );
+  }
+
+  return {
+    founderEntityId,
+    profileId,
+    summary: persisted.summary,
+  };
+}
+
+export class SupabaseGraphStore implements GraphPersistenceStore {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
   async findEntityByIdentifier(identifier: GraphIdentifierInput): Promise<string | null> {
@@ -384,6 +431,26 @@ class SupabaseGraphStore implements GraphPersistenceStore {
       .single();
     if (error) throw error;
   }
+
+  async recordPossibleResolution(
+    leftEntityId: string,
+    rightEntityId: string,
+    reason: string,
+    identifiers: GraphIdentifierInput[],
+  ): Promise<void> {
+    const [left, right] = [leftEntityId, rightEntityId].sort();
+    const { error } = await this.client.from("graph_entity_resolution_candidates").upsert(
+      {
+        left_entity_id: left,
+        right_entity_id: right,
+        status: "possible",
+        reason,
+        identifiers_json: identifiers.map((identifier) => ({ ...identifier })),
+      },
+      { onConflict: "left_entity_id,right_entity_id" },
+    );
+    if (error) throw error;
+  }
 }
 
 export async function persistGraphIngestion(
@@ -394,6 +461,100 @@ export async function persistGraphIngestion(
   return persistGraphIngestionWithStore(new SupabaseGraphStore(supabaseAdmin), result, profileId);
 }
 
+export async function persistGraphFragment(
+  result: GraphIngestionResult,
+): Promise<GraphFragmentPersistenceResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return persistGraphFragmentWithStore(new SupabaseGraphStore(supabaseAdmin), result);
+}
+
+export async function persistPublicFounderGraph(
+  result: GraphIngestionResult,
+  input: {
+    name: string;
+    headline: string;
+    github?: string | null;
+    linkedin?: string | null;
+    site?: string | null;
+    summary?: string | null;
+  },
+): Promise<GraphPersistenceResult> {
+  const founders = result.entities.filter((entity) => entity.entityType === "founder");
+  if (founders.length !== 1) {
+    throw new Error("A discoverable public profile must contain exactly one founder entity.");
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const store = new SupabaseGraphStore(supabaseAdmin);
+  const persisted = await persistGraphFragmentWithStore(store, result);
+  const founderEntityId = persisted.entityIds[founders[0].tempId];
+  if (!founderEntityId) throw new Error("The persisted founder entity could not be resolved.");
+
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from("founder_profiles")
+    .select(
+      "id,published,profile_origin,claim_status,visibility_state,name,headline,github,linkedin,site,summary",
+    )
+    .eq("graph_entity_id", founderEntityId)
+    .maybeSingle();
+  if (existingError) throw existingError;
+
+  const protectsFounderSubmission = existing?.profile_origin === "founder_submission";
+  const values = {
+    name: protectsFounderSubmission ? existing.name : input.name.trim(),
+    headline: protectsFounderSubmission
+      ? existing.headline
+      : input.headline.trim() || "Public-source founder profile",
+    github: input.github || existing?.github || null,
+    linkedin: protectsFounderSubmission
+      ? existing.linkedin
+      : input.linkedin || existing?.linkedin || null,
+    site: protectsFounderSubmission ? existing.site : input.site || existing?.site || null,
+    summary: protectsFounderSubmission
+      ? existing.summary
+      : input.summary?.trim() || input.headline.trim() || "Public-source evidence profile.",
+    scores: {
+      founder_score: null,
+      founder_score_status: "insufficient_evidence",
+      evidence_model: "multi_source_graph_v1",
+    },
+    profile_origin: protectsFounderSubmission ? existing.profile_origin : "public_scan",
+    claim_status: protectsFounderSubmission ? existing.claim_status : "unclaimed",
+    visibility_state: existing?.published ? "published" : "discoverable",
+  };
+
+  let profileId: string;
+  if (existing) {
+    const { data, error } = await supabaseAdmin
+      .from("founder_profiles")
+      .update(values)
+      .eq("id", existing.id)
+      .select("id")
+      .single();
+    if (error) throw error;
+    profileId = data.id;
+  } else {
+    const { data, error } = await supabaseAdmin
+      .from("founder_profiles")
+      .insert(values)
+      .select("id")
+      .single();
+    if (error) throw error;
+    profileId = data.id;
+  }
+
+  await store.upsertIdentifier(founderEntityId, {
+    scheme: "matchfund_profile_id",
+    value: profileId,
+  });
+  await store.linkProfile(profileId, founderEntityId);
+  return {
+    founderEntityId,
+    profileId,
+    summary: persisted.summary,
+  };
+}
+
 export async function createOrUpdateFounderProfile(
   result: GraphIngestionResult,
   input: {
@@ -402,6 +563,9 @@ export async function createOrUpdateFounderProfile(
     github: string;
     linkedin: string;
     site: string;
+    profileOrigin?: ProfileOrigin;
+    claimStatus?: ProfileClaimStatus;
+    visibilityState?: ProfileVisibilityState;
   },
 ): Promise<{ id: string; published: boolean }> {
   const founder = result.entities.find((entity) => entity.entityType === "founder");
@@ -422,11 +586,25 @@ export async function createOrUpdateFounderProfile(
     value: githubUserId,
   });
 
-  let existingProfile: { id: string; published: boolean } | null = null;
+  type ExistingProfile = {
+    id: string;
+    published: boolean;
+    profile_origin: string;
+    claim_status: string;
+    visibility_state: string;
+    name: string;
+    headline: string;
+    linkedin: string | null;
+    site: string | null;
+    summary: string | null;
+  };
+  let existingProfile: ExistingProfile | null = null;
   if (existingEntityId) {
     const { data, error } = await supabaseAdmin
       .from("founder_profiles")
-      .select("id,published")
+      .select(
+        "id,published,profile_origin,claim_status,visibility_state,name,headline,linkedin,site,summary",
+      )
       .eq("graph_entity_id", existingEntityId)
       .maybeSingle();
     if (error) throw error;
@@ -436,14 +614,16 @@ export async function createOrUpdateFounderProfile(
   if (!existingProfile) {
     const { data: candidates, error } = await supabaseAdmin
       .from("founder_profiles")
-      .select("id,published,github")
+      .select(
+        "id,published,github,profile_origin,claim_status,visibility_state,name,headline,linkedin,site,summary",
+      )
       .not("github", "is", null)
       .order("updated_at", { ascending: false });
     if (error) throw error;
     const match = candidates.find(
       (candidate) => parseGitHubLogin(candidate.github ?? "")?.toLowerCase() === login,
     );
-    if (match) existingProfile = { id: match.id, published: match.published };
+    if (match) existingProfile = match;
   }
 
   const properties = asObject(founder.properties);
@@ -451,13 +631,26 @@ export async function createOrUpdateFounderProfile(
     (typeof properties.bio === "string" && properties.bio.trim()) ||
     input.headline.trim() ||
     `Public GitHub evidence for @${login}.`;
+  const profileOrigin = input.profileOrigin ?? "founder_submission";
+  const claimStatus =
+    input.claimStatus ?? (profileOrigin === "public_scan" ? "unclaimed" : "self_submitted");
+  const visibilityState =
+    input.visibilityState ?? (profileOrigin === "public_scan" ? "discoverable" : "private");
+  const protectsFounderSubmission =
+    profileOrigin === "public_scan" && existingProfile?.profile_origin === "founder_submission";
   const values = {
-    name: input.name.trim(),
-    headline: input.headline.trim(),
+    name: protectsFounderSubmission && existingProfile ? existingProfile.name : input.name.trim(),
+    headline: protectsFounderSubmission
+      ? (existingProfile?.headline ?? "")
+      : input.headline.trim() || `Public GitHub profile @${login}`,
     github: typeof properties.githubUrl === "string" ? properties.githubUrl : input.github,
-    linkedin: input.linkedin || null,
-    site: input.site || null,
-    summary,
+    linkedin:
+      protectsFounderSubmission && existingProfile
+        ? existingProfile.linkedin
+        : input.linkedin || null,
+    site: protectsFounderSubmission && existingProfile ? existingProfile.site : input.site || null,
+    summary:
+      protectsFounderSubmission && existingProfile ? (existingProfile.summary ?? summary) : summary,
     scores: {
       founder_score: null,
       founder_score_status: "insufficient_evidence",
@@ -466,9 +659,21 @@ export async function createOrUpdateFounderProfile(
   };
 
   if (existingProfile) {
+    const provenance = {
+      profile_origin: existingProfile.profile_origin,
+      claim_status:
+        profileOrigin === "founder_submission" && existingProfile.claim_status === "unclaimed"
+          ? "self_submitted"
+          : existingProfile.claim_status,
+      visibility_state: existingProfile.published
+        ? "published"
+        : existingProfile.visibility_state === "discoverable" || visibilityState === "discoverable"
+          ? "discoverable"
+          : visibilityState,
+    };
     const { data, error } = await supabaseAdmin
       .from("founder_profiles")
-      .update(values)
+      .update({ ...values, ...provenance })
       .eq("id", existingProfile.id)
       .select("id,published")
       .single();
@@ -478,7 +683,12 @@ export async function createOrUpdateFounderProfile(
 
   const { data, error } = await supabaseAdmin
     .from("founder_profiles")
-    .insert(values)
+    .insert({
+      ...values,
+      profile_origin: profileOrigin,
+      claim_status: claimStatus,
+      visibility_state: visibilityState,
+    })
     .select("id,published")
     .single();
   if (error) throw error;

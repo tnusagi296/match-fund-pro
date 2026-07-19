@@ -30,7 +30,7 @@ import type {
 import type { GraphIngestionSummary } from "@/lib/graph/types";
 
 export const Route = createFileRoute("/me")({
-  head: () => ({ meta: [{ title: "My founder profile — MatchFund" }] }),
+  head: () => ({ meta: [{ title: "Claim or enrich your profile — MatchFund" }] }),
   component: FounderOnboarding,
 });
 
@@ -196,9 +196,11 @@ function FounderOnboarding() {
   return (
     <AppShell>
       <div className="mb-6">
-        <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Founder</div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
+          Founder evidence
+        </div>
         <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">
-          Build your profile
+          Claim or enrich your profile
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           MatchFund turns live GitHub and founder-submitted project pages into evidence-backed

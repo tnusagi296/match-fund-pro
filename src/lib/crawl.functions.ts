@@ -234,7 +234,7 @@ export const publishFounderProfile = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile, error } = await supabaseAdmin
       .from("founder_profiles")
-      .update({ published: true })
+      .update({ published: true, visibility_state: "published" })
       .eq("id", data.profileId)
       .not("graph_entity_id", "is", null)
       .select("id,published,graph_entity_id")

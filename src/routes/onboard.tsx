@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Sparkles, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Search, Target } from "lucide-react";
 import {
   DEFAULT_THESIS,
   GEO_OPTIONS,
@@ -28,6 +28,7 @@ function OnboardPage() {
 
   const finish = () => {
     saveThesis({ ...thesis, seenCoachMark: false, swipeCount: 0 });
+    window.sessionStorage.setItem("matchfund:discovery-autostart", "true");
     navigate({ to: "/" });
   };
 
@@ -74,9 +75,7 @@ function OnboardPage() {
                 return (
                   <button
                     key={s.value}
-                    onClick={() =>
-                      setThesis({ ...thesis, stages: toggle(thesis.stages, s.value) })
-                    }
+                    onClick={() => setThesis({ ...thesis, stages: toggle(thesis.stages, s.value) })}
                     className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
                       active
                         ? "border-mint bg-mint-soft/40"
@@ -112,9 +111,7 @@ function OnboardPage() {
                 return (
                   <button
                     key={s}
-                    onClick={() =>
-                      setThesis({ ...thesis, sectors: toggle(thesis.sectors, s) })
-                    }
+                    onClick={() => setThesis({ ...thesis, sectors: toggle(thesis.sectors, s) })}
                     className={`rounded-full border px-4 py-2 text-sm transition ${
                       active
                         ? "border-mint bg-mint-soft text-mint"
@@ -155,9 +152,7 @@ function OnboardPage() {
                 label="Founder-market fit"
                 hint="Domain expertise, prior exits, why-this-founder"
                 value={thesis.weights.fmf}
-                onChange={(v) =>
-                  setThesis({ ...thesis, weights: { ...thesis.weights, fmf: v } })
-                }
+                onChange={(v) => setThesis({ ...thesis, weights: { ...thesis.weights, fmf: v } })}
               />
             </div>
           </Stepper>
@@ -268,7 +263,7 @@ function OnboardPage() {
               onClick={finish}
               className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2 text-sm font-medium text-primary-foreground shadow-[0_0_28px_var(--mint-soft)]"
             >
-              <Sparkles className="h-3.5 w-3.5" /> Start swiping
+              <Search className="h-3.5 w-3.5" /> Find founders
             </button>
           )}
         </div>

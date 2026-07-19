@@ -143,6 +143,9 @@ function snapshotFromResult(result: GraphIngestionResult): GraphProjectionSnapsh
       site: null,
       summary: "Graph-backed founder fixture",
       updatedAt: observedAt,
+      profileOrigin: "founder_submission",
+      claimStatus: "self_submitted",
+      visibilityState: "published",
     },
     entities: result.entities.map((entity) => ({
       id: entityIds.get(entity.tempId)!,

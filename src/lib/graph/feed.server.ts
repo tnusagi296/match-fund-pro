@@ -3,6 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { projectFounderCard } from "./projection";
 import type {
   GraphClaimRecord,
+  DiscoveryProvenance,
   GraphEntityRecord,
   GraphEvidenceRecord,
   GraphFounderCard,
@@ -18,7 +19,7 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
-export async function loadPublishedGraphFounderCards(
+export async function loadDiscoverableGraphFounderCards(
   injectedClient?: SupabaseClient<Database>,
 ): Promise<GraphFounderCard[]> {
   const client =
@@ -26,12 +27,23 @@ export async function loadPublishedGraphFounderCards(
 
   const { data: profiles, error: profileError } = await client
     .from("founder_profiles")
-    .select("id,graph_entity_id,name,headline,github,linkedin,site,summary,updated_at")
-    .eq("published", true)
+    .select(
+      "id,graph_entity_id,name,headline,github,linkedin,site,summary,updated_at,profile_origin,claim_status,visibility_state",
+    )
+    .or("published.eq.true,visibility_state.eq.discoverable")
     .not("graph_entity_id", "is", null)
     .order("updated_at", { ascending: false });
   assertNoError(profileError, "profile query");
   if (!profiles || profiles.length === 0) return [];
+
+  const profileIds = profiles.map((profile) => profile.id);
+  const { data: discoveryRows, error: discoveryError } = await client
+    .from("discovery_candidates")
+    .select("founder_profile_id,source,source_url,discovery_reasons_json,created_at")
+    .in("founder_profile_id", profileIds)
+    .eq("status", "ingested")
+    .order("created_at", { ascending: false });
+  assertNoError(discoveryError, "discovery provenance query");
 
   const founderIds = profiles
     .map((profile) => profile.graph_entity_id)
@@ -253,6 +265,29 @@ export async function loadPublishedGraphFounderCards(
       ...relevantClaimEvidence.map((link) => link.evidence_id),
     ]);
 
+    const discoveryProvenance: DiscoveryProvenance[] = (discoveryRows ?? [])
+      .filter((row) => row.founder_profile_id === profile.id)
+      .flatMap((row) => {
+        if (!["github", "hackathon", "accelerator", "german_register"].includes(row.source)) {
+          return [];
+        }
+        const values = Array.isArray(row.discovery_reasons_json) ? row.discovery_reasons_json : [];
+        const reasons = values.flatMap((value) => {
+          if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+          const query = typeof value.query === "string" ? value.query : "";
+          const reason =
+            typeof value.planReason === "string" ? value.planReason : "Public source candidate";
+          return [{ query, reason }];
+        });
+        return [
+          {
+            source: row.source as DiscoveryProvenance["source"],
+            sourceUrl: row.source_url,
+            introducedAt: row.created_at,
+            reasons,
+          },
+        ];
+      });
     const snapshot: GraphProjectionSnapshot = {
       profile: {
         id: profile.id,
@@ -264,6 +299,11 @@ export async function loadPublishedGraphFounderCards(
         site: profile.site,
         summary: profile.summary,
         updatedAt: profile.updated_at,
+        profileOrigin:
+          profile.profile_origin as GraphProjectionSnapshot["profile"]["profileOrigin"],
+        claimStatus: profile.claim_status as GraphProjectionSnapshot["profile"]["claimStatus"],
+        visibilityState:
+          profile.visibility_state as GraphProjectionSnapshot["profile"]["visibilityState"],
       },
       entities: entities.filter((entity) => relevantEntityIds.has(entity.id)),
       relationships: relevantRelationships,
@@ -277,8 +317,13 @@ export async function loadPublishedGraphFounderCards(
         claimId: link.claim_id,
         evidenceId: link.evidence_id,
       })),
+      discoveryProvenance,
     };
 
     return [projectFounderCard(snapshot)];
   });
 }
+
+// Backwards-compatible export for callers created before public-scan profiles
+// became discoverable without founder publication.
+export const loadPublishedGraphFounderCards = loadDiscoverableGraphFounderCards;

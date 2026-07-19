@@ -1,13 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Bookmark,
+  Database,
   Eye,
   Github,
   Heart,
+  Loader2,
   MessageCircle,
   RotateCcw,
+  Search,
   Sparkles,
   Target,
   Trophy,
@@ -16,7 +19,10 @@ import {
 import { AppShell } from "@/components/matchfund/AppShell";
 import { FounderCard } from "@/components/matchfund/FounderCard";
 import { discoveredSources, founders, type Founder } from "@/data/matchfund";
+import { previewDiscoveryPlan, startFounderDiscovery } from "@/lib/discovery/discovery.functions";
+import type { DiscoveryPlan, DiscoveryRunSummary } from "@/lib/discovery/types";
 import { getPublishedGraphFounders } from "@/lib/graph/feed.functions";
+import { profileProvenanceLabel } from "@/lib/graph/profile-provenance";
 import { selectFounderFeed } from "@/lib/graph/feed-selection";
 import { rankGraphFounders } from "@/lib/graph/thesis-fit";
 import type {
@@ -49,9 +55,16 @@ function TodayDeck() {
   const navigate = useNavigate();
   const [thesis, setThesis, hydrated] = useThesis();
   const graphFeedFn = useServerFn(getPublishedGraphFounders);
+  const previewDiscoveryFn = useServerFn(previewDiscoveryPlan);
+  const startDiscoveryFn = useServerFn(startFounderDiscovery);
   const [graphFounders, setGraphFounders] = useState<GraphFounderCardData[]>([]);
   const [graphLoading, setGraphLoading] = useState(true);
   const [graphError, setGraphError] = useState<string | null>(null);
+  const [discoveryPlan, setDiscoveryPlan] = useState<DiscoveryPlan | null>(null);
+  const [discoverySummary, setDiscoverySummary] = useState<DiscoveryRunSummary | null>(null);
+  const [discoveryRunning, setDiscoveryRunning] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+  const discoveryAutostarted = useRef(false);
 
   // Hooked · Trigger + Investment: send new investor into onboarding first.
   useEffect(() => {
@@ -82,6 +95,38 @@ function TodayDeck() {
       active = false;
     };
   }, [graphFeedFn, hydrated]);
+
+  const runDiscovery = useCallback(async () => {
+    if (!thesis || discoveryRunning) return;
+    setDiscoveryRunning(true);
+    setDiscoveryError(null);
+    setDiscoverySummary(null);
+    try {
+      const plan = await previewDiscoveryFn({ data: thesis });
+      setDiscoveryPlan(plan);
+      const summary = await startDiscoveryFn({ data: thesis });
+      setDiscoverySummary(summary);
+      setDiscoveryPlan(summary.plan);
+      const records = await graphFeedFn();
+      setGraphFounders(records);
+      setGraphError(null);
+      setIdx(0);
+    } catch (error) {
+      setDiscoveryError(
+        error instanceof Error ? error.message : "Public founder discovery failed.",
+      );
+    } finally {
+      setDiscoveryRunning(false);
+    }
+  }, [discoveryRunning, graphFeedFn, previewDiscoveryFn, startDiscoveryFn, thesis]);
+
+  useEffect(() => {
+    if (!hydrated || !thesis || discoveryAutostarted.current) return;
+    if (window.sessionStorage.getItem("matchfund:discovery-autostart") !== "true") return;
+    discoveryAutostarted.current = true;
+    window.sessionStorage.removeItem("matchfund:discovery-autostart");
+    void runDiscovery();
+  }, [hydrated, runDiscovery, thesis]);
 
   const ranked = useMemo<RankedDiscovery[]>(() => {
     if (!thesis || graphError) return [];
@@ -203,7 +248,7 @@ function TodayDeck() {
     return (
       <AppShell>
         <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
-          Loading published founder evidence…
+          Loading discoverable founder evidence…
         </div>
       </AppShell>
     );
@@ -222,10 +267,33 @@ function TodayDeck() {
           </div>
         </div>
       )}
+      {(discoveryPlan || discoverySummary || discoveryRunning || discoveryError) && (
+        <DiscoveryRunPanel
+          plan={discoveryPlan}
+          summary={discoverySummary}
+          running={discoveryRunning}
+          error={discoveryError}
+        />
+      )}
       {usingDemoFallback && (
-        <div className="mb-5 rounded-xl border border-amber/30 bg-amber/10 p-3 text-xs text-amber">
-          Demo fallback · no published graph-backed founders were found. Every card below is a Demo
-          profile and does not represent a live crawl.
+        <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-amber/30 bg-amber/10 p-3 text-xs text-amber">
+          <span>
+            Demo fallback · no discoverable graph-backed founders were found. Every card below is a
+            Demo profile and does not represent a live crawl.
+          </span>
+          <button
+            type="button"
+            onClick={() => void runDiscovery()}
+            disabled={discoveryRunning}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber/40 bg-background/40 px-3 py-1.5 font-medium disabled:opacity-50"
+          >
+            {discoveryRunning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Search className="h-3.5 w-3.5" />
+            )}
+            {discoveryRunning ? "Scanning…" : "Find founders"}
+          </button>
         </div>
       )}
       {/* Trigger — the daily count that pulls the investor back */}
@@ -240,12 +308,27 @@ function TodayDeck() {
             Founder Score
           </p>
         </div>
-        <Link
-          to="/onboard"
-          className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <Target className="h-3.5 w-3.5" /> Edit thesis
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void runDiscovery()}
+            disabled={discoveryRunning}
+            className="inline-flex items-center gap-1.5 rounded-full bg-mint px-3.5 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {discoveryRunning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Search className="h-3.5 w-3.5" />
+            )}
+            {discoveryRunning ? "Finding founders…" : "Find founders"}
+          </button>
+          <Link
+            to="/onboard"
+            className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Target className="h-3.5 w-3.5" /> Edit thesis
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
@@ -560,8 +643,8 @@ function TodayDeck() {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {usingDemoFallback
-                ? "Demo profiles are shown only because the published graph feed is empty."
-                : "Published founders projected from stored GitHub graph evidence."}
+                ? "Demo profiles are shown only because the discoverable graph feed is empty."
+                : "Founder-published and unclaimed public-source profiles projected from stored graph evidence."}
             </p>
           </div>
         </div>
@@ -595,6 +678,9 @@ function TodayDeck() {
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {item.kind === "graph" ? (
                   <>
+                    {item.founder.profileOrigin === "public_scan" && (
+                      <SourceChip label={profileProvenanceLabel(item.founder)} />
+                    )}
                     <SourceChip
                       icon="github"
                       label={`${item.founder.repositoryCount} GitHub repositories`}
@@ -625,6 +711,152 @@ function TodayDeck() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+function DiscoveryRunPanel({
+  plan,
+  summary,
+  running,
+  error,
+}: {
+  plan: DiscoveryPlan | null;
+  summary: DiscoveryRunSummary | null;
+  running: boolean;
+  error: string | null;
+}) {
+  const queries =
+    plan?.sources.flatMap((source) =>
+      source.queries.map((query) => ({ ...query, source: source.source })),
+    ) ?? [];
+  const stats = summary?.stats;
+  const status = running ? "Running" : (summary?.status ?? (error ? "Failed" : "Planned"));
+  return (
+    <section className="mb-5 rounded-2xl border border-cyan-300/25 bg-cyan-300/5 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium">
+            {running ? (
+              <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+            ) : (
+              <Database className="h-4 w-4 text-cyan-300" />
+            )}
+            Public founder discovery · {status}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Thesis-specific source plans → public candidates → bounded enrichment → stored graph
+            evidence. Discovery inclusion is not founder-quality evidence.
+          </p>
+        </div>
+        {summary && (
+          <Link
+            to="/"
+            className="rounded-full border border-cyan-300/30 px-3 py-1.5 text-[11px] font-medium text-cyan-200"
+          >
+            View results in Today
+          </Link>
+        )}
+      </div>
+
+      {queries.length > 0 && (
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {queries.map((query, index) => (
+            <div key={`${query.query}-${index}`} className="rounded-lg border border-border/60 p-3">
+              <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                {query.source.replace("_", " ")} theme/query {index + 1} · limit {query.limit}
+              </div>
+              <div className="mt-1 break-words font-mono text-[10px] text-cyan-100">
+                {query.query}
+              </div>
+              <div className="mt-1 text-[10px] text-muted-foreground">{query.reason}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {plan && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {plan.capabilities.map((capability) => {
+            const source = plan.sources.find((item) => item.source === capability.id);
+            const result = summary?.sourceResults.find((item) => item.source === capability.id);
+            const sourceStatus =
+              running && capability.enabled
+                ? "running"
+                : (result?.status ??
+                  source?.status ??
+                  (capability.enabled ? "planned" : "disabled_unconfigured"));
+            return (
+              <div key={capability.id} className="rounded-lg border border-border/60 p-3">
+                <div className="flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-wider">
+                  <span>{capability.id.replace("_", " ")}</span>
+                  <span className="text-cyan-200">{sourceStatus.replace("_", " ")}</span>
+                </div>
+                {result ? (
+                  <div className="mt-2 text-[10px] text-muted-foreground">
+                    {result.recordsEvaluated} evaluated · {result.candidatesDiscovered} discovered ·{" "}
+                    {result.candidatesIngested} profiles · {result.candidatesEnriched} enriched
+                  </div>
+                ) : (
+                  <div className="mt-2 text-[10px] text-muted-foreground">
+                    {source?.disabledReason ??
+                      capability.disabledReason ??
+                      (source
+                        ? `${source.queries.length} bounded queries planned`
+                        : "Runs only after a candidate exposes a supported identifier.")}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {stats && (
+        <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-7">
+          <DiscoveryMetric
+            label="Queries"
+            value={`${stats.queriesExecuted}/${stats.queriesPlanned}`}
+          />
+          <DiscoveryMetric label="Records" value={stats.recordsEvaluated} />
+          <DiscoveryMetric label="Candidates" value={stats.candidateFoundersDiscovered} />
+          <DiscoveryMetric label="Ingested" value={stats.profilesIngested} />
+          <DiscoveryMetric label="Enriched" value={stats.candidatesEnriched} />
+          <DiscoveryMetric label="Skipped" value={stats.skipped} />
+          <DiscoveryMetric label="Failed" value={stats.failed} />
+        </div>
+      )}
+
+      {plan && plan.unsupportedFilters.length > 0 && (
+        <div className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
+          Unknown / post-fetch ·{" "}
+          {plan.unsupportedFilters.map((item) => `${item.field}: ${item.reason}`).join(" · ")}
+        </div>
+      )}
+      {(error || (summary?.issues.length ?? 0) > 0) && (
+        <div className="mt-3 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-[11px] text-rose-200">
+          {[error, ...(summary?.issues.map((issue) => issue.message) ?? [])]
+            .filter(Boolean)
+            .join(" · ")}
+          {summary?.issues.some((issue) => issue.rateLimitResetAt) && (
+            <div className="mt-1 text-[10px] text-rose-200/75">
+              GitHub reset ·{" "}
+              {new Date(
+                summary.issues.find((issue) => issue.rateLimitResetAt)?.rateLimitResetAt ?? "",
+              ).toLocaleString()}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DiscoveryMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-elevated/40 p-2.5">
+      <div className="tabular text-lg font-semibold">{value}</div>
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    </div>
   );
 }
 
@@ -670,6 +902,9 @@ function founderInitials(name: string): string {
 
 function founderSubtitle(item: RankedDiscovery): string {
   if (item.kind === "demo") return `${item.founder.sector} · ${item.founder.stage} · Demo`;
+  if (item.founder.profileOrigin === "public_scan") {
+    return `Public source · Unclaimed · ${item.founder.evidenceConfidence} evidence`;
+  }
   return `${item.founder.topics[0] ?? "Topic unknown"} · ${item.founder.evidenceConfidence} evidence`;
 }
 

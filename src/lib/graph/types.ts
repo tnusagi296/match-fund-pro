@@ -2,10 +2,18 @@ import type { Json } from "@/integrations/supabase/types";
 
 export type GraphEntityType =
   | "founder"
+  | "person"
   | "repository"
   | "project"
   | "hackathon"
   | "organization"
+  | "company"
+  | "accelerator"
+  | "accelerator_cohort"
+  | "legal_entity"
+  | "registration"
+  | "website"
+  | "social_account"
   | "skill"
   | "sector"
   | "source";
@@ -20,7 +28,16 @@ export type GraphIdentifierScheme =
   | "project_url"
   | "hackathon_url"
   | "organization_url"
-  | "source_external_id";
+  | "source_external_id"
+  | "personal_website_url"
+  | "company_website_url"
+  | "company_domain"
+  | "linkedin_url"
+  | "reddit_url"
+  | "accelerator_company_url"
+  | "accelerator_cohort_url"
+  | "euid"
+  | "german_register_key";
 
 export type GraphRelationshipType =
   | "HAS_PROFILE"
@@ -36,11 +53,22 @@ export type GraphRelationshipType =
   | "ORGANIZED"
   | "WON_AT"
   | "FINALIST_AT"
-  | "RECEIVED_PRIZE_AT";
+  | "RECEIVED_PRIZE_AT"
+  | "FOUNDED"
+  | "OPERATED_BY"
+  | "ACCELERATED_BY"
+  | "HAS_WEBSITE"
+  | "HAS_SOCIAL_IDENTIFIER"
+  | "MANAGING_DIRECTOR_OF"
+  | "SHAREHOLDER_OF"
+  | "REGISTERED_REPRESENTATIVE_OF";
 
 export type GraphClaimStatus = "supported" | "self_reported" | "unknown" | "contradicted";
 export type TrustLevel = "high" | "medium" | "low" | "unknown";
 export type EvidenceConfidence = "High" | "Medium" | "Low" | "Unknown";
+export type ProfileOrigin = "public_scan" | "founder_submission" | "demo";
+export type ProfileClaimStatus = "unclaimed" | "self_submitted" | "claimed";
+export type ProfileVisibilityState = "private" | "discoverable" | "published";
 
 export type GraphIdentifierInput = {
   scheme: GraphIdentifierScheme;
@@ -122,6 +150,12 @@ export type GraphPersistenceResult = {
   summary: GraphIngestionSummary;
 };
 
+export type GraphFragmentPersistenceResult = {
+  entityIds: Record<string, string>;
+  evidenceIds: Record<string, string>;
+  summary: GraphIngestionSummary;
+};
+
 export type GraphEntityRecord = {
   id: string;
   entityType: GraphEntityType;
@@ -175,6 +209,9 @@ export type FounderProfileRecord = {
   site: string | null;
   summary: string | null;
   updatedAt: string;
+  profileOrigin: ProfileOrigin;
+  claimStatus: ProfileClaimStatus;
+  visibilityState: ProfileVisibilityState;
 };
 
 export type GraphProjectionSnapshot = {
@@ -185,6 +222,7 @@ export type GraphProjectionSnapshot = {
   evidence: GraphEvidenceRecord[];
   relationshipEvidence: Array<{ relationshipId: string; evidenceId: string }>;
   claimEvidence: Array<{ claimId: string; evidenceId: string }>;
+  discoveryProvenance?: DiscoveryProvenance[];
 };
 
 export type GraphSignal = {
@@ -207,7 +245,12 @@ export type GraphEvidenceReference = {
     | "project_submission"
     | "hackathon_result"
     | "project_technology"
-    | "hackathon_organizer";
+    | "hackathon_organizer"
+    | "company_founder"
+    | "accelerator_participation"
+    | "website_profile"
+    | "website_technology"
+    | "legal_role";
   value: string;
   repositoryName: string | null;
   entityName: string | null;
@@ -272,6 +315,20 @@ export type GraphFounderCard = {
   unsupportedClaims: string[];
   unknowns: string[];
   founderScoreLabel: "Insufficient evidence";
+  profileOrigin: ProfileOrigin;
+  claimStatus: ProfileClaimStatus;
+  visibilityState: ProfileVisibilityState;
+  discoveryProvenance: DiscoveryProvenance[];
+};
+
+export type DiscoveryProvenance = {
+  source: "github" | "hackathon" | "accelerator" | "german_register";
+  sourceUrl: string;
+  introducedAt: string;
+  reasons: Array<{
+    query: string;
+    reason: string;
+  }>;
 };
 
 export type EvidencePath = {

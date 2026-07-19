@@ -10,7 +10,7 @@ const NAV_INVESTOR = [
   { to: "/onboard", label: "Thesis" },
 ];
 const NAV_FOUNDER = [
-  { to: "/me", label: "My profile" },
+  { to: "/me", label: "Claim / enrich" },
   { to: "/grants", label: "Grants" },
   { to: "/", label: "How I appear" },
 ];

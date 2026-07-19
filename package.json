@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:graph": "bun test tests/graph.test.ts tests/hackathon-evidence.test.ts",
+    "test:graph": "bun test tests/graph.test.ts tests/hackathon-evidence.test.ts tests/discovery.test.ts tests/multi-source-discovery.test.ts",
+    "test:discovery": "bun test tests/discovery.test.ts",
+    "test:multi-source": "bun test tests/multi-source-discovery.test.ts",
     "test:hackathon": "bun test tests/hackathon-evidence.test.ts",
     "format": "prettier --write ."
   },

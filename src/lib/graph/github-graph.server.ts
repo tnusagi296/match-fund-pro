@@ -18,13 +18,14 @@ type GitHubUser = {
   html_url: string;
   bio: string | null;
   location: string | null;
+  blog?: string | null;
   public_repos: number;
   followers: number;
   created_at: string;
   updated_at: string;
 };
 
-type GitHubRepository = {
+export type GitHubRepositorySeed = {
   id: number;
   name: string;
   full_name: string;
@@ -51,6 +52,8 @@ export type GitHubGraphAdapterInput = {
   headline?: string;
   linkedin?: string;
   site?: string;
+  repositorySeeds?: GitHubRepositorySeed[];
+  repositoryLimit?: number;
 };
 
 type GitHubGraphAdapterOptions = {
@@ -130,12 +133,13 @@ function selectedUserPayload(user: GitHubUser) {
     html_url: user.html_url,
     bio: user.bio,
     location: user.location,
+    blog: user.blog ?? null,
     public_repos: user.public_repos,
     updated_at: user.updated_at,
   };
 }
 
-function selectedRepositoryPayload(repository: GitHubRepository) {
+function selectedRepositoryPayload(repository: GitHubRepositorySeed) {
   return {
     id: repository.id,
     name: repository.name,
@@ -172,27 +176,43 @@ export class GitHubGraphAdapter {
     }
 
     const user = await this.getJson<GitHubUser>(`/users/${encodeURIComponent(login)}`);
-    const repositories = await this.getRepositories(user);
+    const recentRepositories = await this.getRepositories(user, input.repositoryLimit);
+    const repositoryLimit = input.repositoryLimit ?? Number.POSITIVE_INFINITY;
+    const repositories = [...(input.repositorySeeds ?? []), ...recentRepositories]
+      .filter(
+        (repository, index, all) =>
+          all.findIndex((candidate) => candidate.id === repository.id) === index,
+      )
+      .filter((repository) => !repository.private && !repository.disabled && !repository.archived)
+      .slice(0, repositoryLimit);
     const retrievedAt = this.now().toISOString();
 
     return this.normalize(input, user, repositories, retrievedAt);
   }
 
-  private async getRepositories(user: GitHubUser): Promise<GitHubRepository[]> {
-    const pageCount = Math.max(1, Math.ceil(user.public_repos / 100));
-    const repositories: GitHubRepository[] = [];
+  private async getRepositories(
+    user: GitHubUser,
+    requestedLimit?: number,
+  ): Promise<GitHubRepositorySeed[]> {
+    const limit =
+      requestedLimit === undefined
+        ? Math.max(1, user.public_repos)
+        : Math.max(1, Math.min(requestedLimit, user.public_repos || requestedLimit));
+    const perPage = Math.min(100, limit);
+    const pageCount = Math.max(1, Math.ceil(limit / perPage));
+    const repositories: GitHubRepositorySeed[] = [];
 
     for (let page = 1; page <= pageCount; page += 1) {
-      const result = await this.getJson<GitHubRepository[]>(
-        `/users/${encodeURIComponent(user.login)}/repos?per_page=100&type=owner&sort=pushed&page=${page}`,
+      const result = await this.getJson<GitHubRepositorySeed[]>(
+        `/users/${encodeURIComponent(user.login)}/repos?per_page=${perPage}&type=owner&sort=pushed&page=${page}`,
       );
       repositories.push(...result);
-      if (result.length < 100) break;
+      if (result.length < perPage || repositories.length >= limit) break;
     }
 
-    return repositories.filter(
-      (repository) => !repository.private && !repository.disabled && !repository.archived,
-    );
+    return repositories
+      .filter((repository) => !repository.private && !repository.disabled && !repository.archived)
+      .slice(0, limit);
   }
 
   private async getJson<T>(path: string): Promise<T> {
@@ -217,7 +237,7 @@ export class GitHubGraphAdapter {
   private async normalize(
     input: GitHubGraphAdapterInput,
     user: GitHubUser,
-    repositories: GitHubRepository[],
+    repositories: GitHubRepositorySeed[],
     retrievedAt: string,
   ): Promise<GraphIngestionResult> {
     const entities: GraphEntityInput[] = [];
@@ -234,6 +254,21 @@ export class GitHubGraphAdapter {
       payload: userPayload,
     });
     const userEvidenceTempId = `evidence:github-user:${user.id}:${userHash.slice(0, 12)}`;
+    let publicWebsite: string | null = null;
+    if (user.blog?.trim()) {
+      try {
+        const candidate = new URL(
+          /^https?:\/\//i.test(user.blog) ? user.blog : `https://${user.blog}`,
+        );
+        if (["http:", "https:"].includes(candidate.protocol)) {
+          candidate.protocol = "https:";
+          candidate.hash = "";
+          publicWebsite = candidate.href;
+        }
+      } catch {
+        // GitHub's free-text blog field is ignored when it is not a public URL.
+      }
+    }
 
     entities.push(
       {
@@ -250,11 +285,17 @@ export class GitHubGraphAdapter {
           location: user.location,
           headline: input.headline ?? "",
           linkedin: input.linkedin || null,
-          site: input.site || null,
+          site: input.site || publicWebsite,
+          blog: publicWebsite,
         },
         identifiers: [
           { scheme: "github_user_id", value: String(user.id) },
           { scheme: "github_login", value: user.login.toLowerCase() },
+          ...(publicWebsite
+            ? ([
+                { scheme: "personal_website_url", value: publicWebsite },
+              ] satisfies GraphEntityInput["identifiers"])
+            : []),
         ],
       },
       {
@@ -273,7 +314,7 @@ export class GitHubGraphAdapter {
       sourceUrl: user.html_url,
       sourceExternalId: String(user.id),
       retrievedAt,
-      excerpt: `GitHub profile @${user.login}: ${user.public_repos} public repositories; updated ${user.updated_at.slice(0, 10)}.`,
+      excerpt: `GitHub profile @${user.login}${user.location ? ` lists location “${user.location}”` : ""}: ${user.public_repos} public repositories; updated ${user.updated_at.slice(0, 10)}.`,
       rawPayload: userPayload,
       contentHash: userHash,
       reliability: 0.95,
@@ -300,7 +341,7 @@ export class GitHubGraphAdapter {
       tempId: `claim:${founderTempId}:github_profile`,
       subjectTempId: founderTempId,
       predicate: "github_profile",
-      value: { userId: user.id, login: user.login, url: user.html_url },
+      value: { userId: user.id, login: user.login, url: user.html_url, blog: publicWebsite },
       status: "supported",
       trustLevel: "high",
       observedAt: retrievedAt,
@@ -316,9 +357,9 @@ export class GitHubGraphAdapter {
         payload: repositoryPayload,
       });
       const repositoryEvidenceTempId = `evidence:github-repository:${repository.id}:${repositoryHash.slice(0, 12)}`;
-      const ownershipEstablished =
-        repository.owner.id === user.id &&
-        repository.owner.login.toLowerCase() === user.login.toLowerCase();
+      // GitHub's immutable numeric owner ID is the canonical ownership check.
+      // Logins can change and are therefore identifiers, not the identity key.
+      const ownershipEstablished = repository.owner.id === user.id;
 
       entities.push({
         tempId: repositoryTempId,

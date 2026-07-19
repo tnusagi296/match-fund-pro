@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { discoveredSources, type Founder } from "@/data/matchfund";
 import type { GraphFounderCard as GraphFounderCardData, ThesisFitResult } from "@/lib/graph/types";
+import { profileProvenanceLabel } from "@/lib/graph/profile-provenance";
 import type { MatchScore } from "@/lib/thesis";
 import {
   Drawer,
@@ -288,7 +289,7 @@ function GraphFounderSignalCard({
           }}
         />
         <div className="absolute left-4 top-4 rounded-full border border-mint/30 bg-background/70 px-2.5 py-1 text-[10px] font-medium text-mint backdrop-blur">
-          Live graph profile
+          {profileProvenanceLabel(founder)}
         </div>
         <div className="absolute right-4 top-4 rounded-full border border-border bg-background/70 px-2.5 py-1 text-[10px] text-muted-foreground backdrop-blur">
           {founder.repositoryCount} repos · {founder.projects.length} projects ·{" "}
@@ -421,6 +422,55 @@ function GraphFounderSignalCard({
             </div>
           ))}
         </div>
+
+        {founder.discoveryProvenance.length > 0 && (
+          <details
+            className="mt-4 rounded-xl border border-border/70 bg-elevated/30 p-3"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <summary className="cursor-pointer text-xs font-medium text-foreground">
+              Why discovered · {founder.discoveryProvenance.length} public-source introduction
+              {founder.discoveryProvenance.length === 1 ? "" : "s"}
+            </summary>
+            <div className="mt-3 space-y-2">
+              {founder.discoveryProvenance.map((provenance, index) => (
+                <div
+                  key={`${provenance.source}-${provenance.sourceUrl}-${index}`}
+                  className="rounded-lg border border-border/60 bg-background/40 p-3 text-[11px]"
+                >
+                  <div className="font-medium capitalize text-foreground">
+                    {provenance.source.replace("_", " ")}
+                  </div>
+                  {provenance.reasons.slice(0, 3).map((reason, reasonIndex) => (
+                    <div
+                      key={`${reason.query}-${reasonIndex}`}
+                      className="mt-1 text-muted-foreground"
+                    >
+                      {reason.reason}
+                      {reason.query ? ` · theme/query: ${reason.query}` : ""}
+                    </div>
+                  ))}
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <a
+                      href={provenance.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-w-0 items-center gap-1 truncate text-cyan-300 hover:underline"
+                    >
+                      Open discovery source <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                    <span className="shrink-0 text-muted-foreground">
+                      {formatDate(provenance.introducedAt)}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-[10px] text-muted-foreground/80">
+                    Discovery provenance only—not matching evidence.
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
 
         <Drawer shouldScaleBackground={false}>
           <DrawerTrigger asChild>

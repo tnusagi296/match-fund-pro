@@ -9,6 +9,12 @@ export type Thesis = {
   stages: Stage[];
   sectors: Sector[];
   keywords?: string[];
+  technicalThemes?: string[];
+  preferredLanguages?: string[];
+  founderArchetypes?: string[];
+  desiredSignals?: string[];
+  activityRecencyDays?: number;
+  exclusions?: string[];
   technicalBuilderRequired?: boolean;
   weights: { technical: number; traction: number; fmf: number };
   geos: string[]; // e.g. "US", "EU", "Asia", "LatAm", "Africa", "Remote"
@@ -22,6 +28,13 @@ export type Thesis = {
 export const DEFAULT_THESIS: Thesis = {
   stages: [],
   sectors: [],
+  keywords: [],
+  technicalThemes: [],
+  preferredLanguages: [],
+  founderArchetypes: [],
+  desiredSignals: [],
+  activityRecencyDays: 365,
+  exclusions: [],
   weights: { technical: 34, traction: 33, fmf: 33 },
   geos: [],
   checkMin: 25,

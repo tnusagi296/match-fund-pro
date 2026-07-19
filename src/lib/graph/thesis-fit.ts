@@ -161,6 +161,9 @@ export function calculateGraphThesisFit(
             "project_technology",
             "project_submission",
             "project_contribution",
+            "website_technology",
+            "company_founder",
+            "accelerator_participation",
           ],
           termsFor(keyword),
         );
@@ -171,30 +174,26 @@ export function calculateGraphThesisFit(
 
   const requiresTechnicalBuilder = thesis.technicalBuilderRequired ?? thesis.weights.technical > 0;
   if (requiresTechnicalBuilder) {
-    if (founder.sourceCount === 0) {
-      unknownCriteria.push("Technical-builder requirement: no usable public evidence");
-    } else {
-      const supportedProjectBuild = Boolean(
-        findReference(founder, ["project_contribution", "project_technology"]),
+    const technicalReferences = founder.evidenceReferences.filter(
+      (reference) =>
+        [
+          "repository_ownership",
+          "language",
+          "recent_activity",
+          "project_contribution",
+          "project_technology",
+        ].includes(reference.kind) && reference.supportStatus === "supported",
+    );
+    if (technicalReferences.length === 0) {
+      unknownCriteria.push(
+        "Technical-builder requirement: no supported repository ownership or project-contribution evidence",
       );
-      const technicalMatch = founder.repositoryCount > 0 || supportedProjectBuild;
-      criteria.push({ weight: 35, score: technicalMatch ? 100 : 0 });
-      if (technicalMatch) {
-        const criterion = "Technical-builder requirement supported by public build evidence";
-        pushUnique(matchedCriteria, criterion);
-        const technicalReferences = founder.evidenceReferences.filter(
-          (reference) =>
-            [
-              "repository_ownership",
-              "language",
-              "recent_activity",
-              "project_contribution",
-              "project_technology",
-            ].includes(reference.kind) && reference.supportStatus === "supported",
-        );
-        for (const reference of technicalReferences.slice(0, 3)) {
-          paths.push(evidencePath(criterion, reference));
-        }
+    } else {
+      criteria.push({ weight: 35, score: 100 });
+      const criterion = "Technical-builder requirement supported by public build evidence";
+      pushUnique(matchedCriteria, criterion);
+      for (const reference of technicalReferences.slice(0, 3)) {
+        paths.push(evidencePath(criterion, reference));
       }
     }
   }

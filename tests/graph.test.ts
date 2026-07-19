@@ -6,12 +6,14 @@ import {
   stableGitHubEntityKey,
 } from "../src/lib/graph/github-graph.server";
 import {
+  persistGraphFragmentWithStore,
   persistGraphIngestionWithStore,
   type GraphPersistenceStore,
 } from "../src/lib/graph/persistence.server";
 import { projectFounderCard } from "../src/lib/graph/projection";
 import { calculateGraphThesisFit } from "../src/lib/graph/thesis-fit";
 import { selectFounderFeed } from "../src/lib/graph/feed-selection";
+import { profileProvenanceLabel } from "../src/lib/graph/profile-provenance";
 import type {
   GraphClaimInput,
   GraphEntityInput,
@@ -79,6 +81,9 @@ function snapshotFromResult(result: GraphIngestionResult): GraphProjectionSnapsh
       site: null,
       summary: "Recorded graph fixture",
       updatedAt: observedAt,
+      profileOrigin: "founder_submission",
+      claimStatus: "self_submitted",
+      visibilityState: "published",
     },
     entities: result.entities.map((entity) => ({
       id: entityIds.get(entity.tempId)!,
@@ -144,6 +149,7 @@ class MemoryGraphStore implements GraphPersistenceStore {
   readonly relationshipEvidence = new Set<string>();
   readonly claimEvidence = new Set<string>();
   readonly profiles = new Map<string, string>();
+  readonly possibleResolutions: Array<{ left: string; right: string }> = [];
 
   private id(prefix: string): string {
     this.sequence += 1;
@@ -220,7 +226,40 @@ class MemoryGraphStore implements GraphPersistenceStore {
     this.profiles.set(profileId, founderEntityId);
     return Promise.resolve();
   }
+
+  recordPossibleResolution(left: string, right: string): Promise<void> {
+    this.possibleResolutions.push({ left, right });
+    return Promise.resolve();
+  }
 }
+
+test("conflicting stable identifiers are recorded for review instead of merged", async () => {
+  const store = new MemoryGraphStore();
+  store.identifiers.set("github_user_id:101", "person-one");
+  store.identifiers.set("linkedin_url:https://www.linkedin.com/in/alex/", "person-two");
+  const graph: GraphIngestionResult = {
+    entities: [
+      {
+        tempId: "person:ambiguous",
+        entityType: "person",
+        canonicalKey: "candidate:ambiguous",
+        canonicalName: "Alex",
+        properties: {},
+        identifiers: [
+          { scheme: "github_user_id", value: "101" },
+          { scheme: "linkedin_url", value: "https://www.linkedin.com/in/alex/" },
+        ],
+      },
+    ],
+    relationships: [],
+    claims: [],
+    evidence: [],
+  };
+  await expect(persistGraphFragmentWithStore(store, graph)).rejects.toThrow(
+    "resolve to different entities",
+  );
+  expect(store.possibleResolutions).toEqual([{ left: "person-one", right: "person-two" }]);
+});
 
 describe("GitHub URL parsing", () => {
   test("accepts usernames, @handles, and complete profile URLs", () => {
@@ -308,6 +347,25 @@ describe("founder-card graph projection", () => {
     });
     expect(card.evidenceConfidence).toBe("Unknown");
     expect(card.sourceCount).toBe(0);
+  });
+
+  test("projects public-scan provenance without treating the profile as founder-verified", async () => {
+    const snapshot = snapshotFromResult(await normalizedFixture());
+    const card = projectFounderCard({
+      ...snapshot,
+      profile: {
+        ...snapshot.profile,
+        profileOrigin: "public_scan",
+        claimStatus: "unclaimed",
+        visibilityState: "discoverable",
+      },
+    });
+    expect(card.profileOrigin).toBe("public_scan");
+    expect(card.claimStatus).toBe("unclaimed");
+    expect(card.visibilityState).toBe("discoverable");
+    expect(profileProvenanceLabel(card)).toBe("Public-source profile · Unclaimed");
+    expect(card.founderScoreLabel).toBe("Insufficient evidence");
+    expect(selectFounderFeed([card], ["demo"])).toEqual({ mode: "graph", records: [card] });
   });
 });
 

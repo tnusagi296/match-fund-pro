@@ -97,9 +97,14 @@ function evidenceConfidence(
 
   const reliablePublicEvidence = snapshot.relationships.some((relationship) => {
     if (
-      !["OWNS_REPOSITORY", "CONTRIBUTED_TO", "SUBMITTED_TO"].includes(
-        relationship.relationshipType,
-      ) ||
+      ![
+        "OWNS_REPOSITORY",
+        "CONTRIBUTED_TO",
+        "SUBMITTED_TO",
+        "FOUNDED",
+        "PARTICIPATED_IN",
+        "HAS_WEBSITE",
+      ].includes(relationship.relationshipType) ||
       relationshipStatus(relationship) !== "supported"
     )
       return false;
@@ -154,6 +159,101 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
         }),
       );
     }
+  }
+
+  const founderCompanyRelationships = snapshot.relationships.filter(
+    (relationship) =>
+      relationship.sourceEntityId === founder.id && relationship.relationshipType === "FOUNDED",
+  );
+  const companyIds = new Set(
+    founderCompanyRelationships.map((relationship) => relationship.targetEntityId),
+  );
+  for (const relationship of founderCompanyRelationships) {
+    const company = entitiesById.get(relationship.targetEntityId);
+    const evidence = relationshipEvidence(snapshot, relationship, evidenceById);
+    if (!company || !evidence) continue;
+    references.push(
+      makeReference(relationship, evidence, {
+        kind: "company_founder",
+        value: company.canonicalName,
+        repositoryName: null,
+        entityName: company.canonicalName,
+        graphStep: `Founder FOUNDED ${company.canonicalName}`,
+      }),
+    );
+  }
+  const companyRelationships = snapshot.relationships.filter((relationship) =>
+    companyIds.has(relationship.sourceEntityId),
+  );
+  for (const relationship of companyRelationships) {
+    const company = entitiesById.get(relationship.sourceEntityId);
+    const target = entitiesById.get(relationship.targetEntityId);
+    const evidence = relationshipEvidence(snapshot, relationship, evidenceById);
+    if (!company || !target || !evidence) continue;
+    if (
+      relationship.relationshipType === "PARTICIPATED_IN" &&
+      target.entityType === "accelerator_cohort"
+    ) {
+      references.push(
+        makeReference(relationship, evidence, {
+          kind: "accelerator_participation",
+          value: `${company.canonicalName} · ${target.canonicalName}`,
+          repositoryName: null,
+          entityName: company.canonicalName,
+          graphStep: `${company.canonicalName} PARTICIPATED_IN ${target.canonicalName}`,
+        }),
+      );
+    }
+    if (relationship.relationshipType === "FOCUSES_ON" && target.entityType === "sector") {
+      topicCounts.set(target.canonicalName, (topicCounts.get(target.canonicalName) ?? 0) + 1);
+      references.push(
+        makeReference(relationship, evidence, {
+          kind: "topic",
+          value: target.canonicalName,
+          repositoryName: null,
+          entityName: company.canonicalName,
+          graphStep: `${company.canonicalName} FOCUSES_ON ${target.canonicalName}`,
+        }),
+      );
+    }
+  }
+
+  const founderWebsiteRelationships = snapshot.relationships.filter(
+    (relationship) =>
+      relationship.sourceEntityId === founder.id && relationship.relationshipType === "HAS_WEBSITE",
+  );
+  for (const relationship of founderWebsiteRelationships) {
+    const website = entitiesById.get(relationship.targetEntityId);
+    const evidence = relationshipEvidence(snapshot, relationship, evidenceById);
+    if (!website || !evidence) continue;
+    references.push(
+      makeReference(relationship, evidence, {
+        kind: "website_profile",
+        value: website.canonicalName,
+        repositoryName: null,
+        entityName: website.canonicalName,
+        graphStep: `Founder HAS_WEBSITE ${website.canonicalName}`,
+      }),
+    );
+  }
+  const founderTechnologyRelationships = snapshot.relationships.filter(
+    (relationship) =>
+      relationship.sourceEntityId === founder.id &&
+      relationship.relationshipType === "USES_TECHNOLOGY",
+  );
+  for (const relationship of founderTechnologyRelationships) {
+    const technology = entitiesById.get(relationship.targetEntityId);
+    const evidence = relationshipEvidence(snapshot, relationship, evidenceById);
+    if (!technology || technology.entityType !== "skill" || !evidence) continue;
+    references.push(
+      makeReference(relationship, evidence, {
+        kind: "website_technology",
+        value: technology.canonicalName,
+        repositoryName: null,
+        entityName: founder.canonicalName,
+        graphStep: `Founder USES_TECHNOLOGY ${technology.canonicalName}`,
+      }),
+    );
   }
 
   for (const relationship of ownership) {
@@ -405,7 +505,7 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
 
   const technologies = [
     ...new Set(
-      projectRelationships.flatMap((relationship) => {
+      [...projectRelationships, ...founderTechnologyRelationships].flatMap((relationship) => {
         if (
           relationship.relationshipType !== "USES_TECHNOLOGY" ||
           relationshipStatus(relationship) !== "supported"
@@ -462,6 +562,11 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
     ];
   });
   const roles = [...new Set(projects.map((project) => project.role).filter(Boolean))] as string[];
+  for (const relationship of founderCompanyRelationships) {
+    const properties = objectValue(relationship.properties);
+    const role = stringValue(properties.role);
+    if (role && !roles.includes(role)) roles.push(role);
+  }
   const verifiedResults = projects.flatMap((project) =>
     project.resultType === "unknown"
       ? []
@@ -517,6 +622,18 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
         project.eventName ?? "",
         ...project.technologies,
       ]),
+    ...[...companyIds].flatMap((companyId) => {
+      const company = entitiesById.get(companyId);
+      if (!company) return [];
+      const properties = objectValue(company.properties);
+      return [
+        company.canonicalName,
+        stringValue(properties.sector),
+        stringValue(properties.accelerator),
+        stringValue(properties.cohort),
+      ].filter((value): value is string => Boolean(value));
+    }),
+    ...technologies,
   ];
 
   const topSignals: GraphSignal[] = [];
@@ -528,6 +645,28 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
         "Ownership is based on matching GitHub owner IDs; it does not claim personal authorship.",
       trustLevel: reference?.trustLevel ?? "unknown",
       evidenceId: reference?.id ?? null,
+    });
+  }
+  const founderReference = references.find(
+    (item) => item.kind === "company_founder" && item.supportStatus === "supported",
+  );
+  if (founderReference) {
+    topSignals.push({
+      title: `Explicitly listed founder of ${founderReference.value}`,
+      detail: "The role is stated by the public accelerator or company source.",
+      trustLevel: founderReference.trustLevel,
+      evidenceId: founderReference.id,
+    });
+  }
+  const acceleratorReference = references.find(
+    (item) => item.kind === "accelerator_participation" && item.supportStatus === "supported",
+  );
+  if (acceleratorReference) {
+    topSignals.push({
+      title: `Accelerator evidence: ${acceleratorReference.value}`,
+      detail: "The company-to-cohort path is explicit in the configured directory source.",
+      trustLevel: acceleratorReference.trustLevel,
+      evidenceId: acceleratorReference.id,
     });
   }
   if (verifiedResults.length > 0) {
@@ -597,11 +736,17 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
   }
 
   const unknowns: string[] = [];
+  if (snapshot.profile.profileOrigin === "public_scan") {
+    unknowns.push(
+      "Startup-founder status is unverified; repository ownership only made this person a discovery candidate.",
+    );
+  }
   if (!location) unknowns.push("Geography was not provided by the founder or GitHub profile.");
   unknowns.push("Company stage was not provided in this flow.");
   if (topics.length === 0) unknowns.push("No repository topics are available for sector matching.");
   if (!recentActivityAt) unknowns.push("No usable repository activity timestamp is available.");
-  if (projects.length === 0) unknowns.push("No hackathon project evidence has been submitted.");
+  if (projects.length === 0)
+    unknowns.push("No hackathon project evidence has been discovered or submitted.");
   if (projects.some((project) => !project.role)) {
     unknowns.push("At least one project contribution role remains unknown.");
   }
@@ -635,7 +780,10 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
     topics,
     recentActivityAt: typeof recentActivityAt === "string" ? recentActivityAt : null,
     sourceCount,
-    evidenceConfidence: evidenceConfidence(snapshot, new Set([...repositoryIds, ...projectIds])),
+    evidenceConfidence: evidenceConfidence(
+      snapshot,
+      new Set([...repositoryIds, ...projectIds, ...companyIds]),
+    ),
     topSignals: topSignals.slice(0, 3),
     evidenceReferences: uniqueReferences,
     repositoryText,
@@ -647,5 +795,9 @@ export function projectFounderCard(snapshot: GraphProjectionSnapshot): GraphFoun
     unsupportedClaims,
     unknowns,
     founderScoreLabel: "Insufficient evidence",
+    profileOrigin: snapshot.profile.profileOrigin,
+    claimStatus: snapshot.profile.claimStatus,
+    visibilityState: snapshot.profile.visibilityState,
+    discoveryProvenance: snapshot.discoveryProvenance ?? [],
   };
 }
