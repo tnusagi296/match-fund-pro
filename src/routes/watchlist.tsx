@@ -117,12 +117,13 @@ function WatchlistPage() {
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-16 text-center">
           <Bookmark className="mx-auto h-8 w-8 text-muted-foreground" />
-          <div className="mt-3 text-sm font-medium">Nothing saved yet</div>
+          <div className="mt-3 text-sm font-medium">No founders shortlisted yet.</div>
           <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
-            Swipe right on founders in Today to save them here.
+            Discover founders matched to your investment thesis and add the most promising
+            profiles to your shortlist.
           </p>
           <Link to="/" className="mt-4 inline-block rounded-full bg-mint px-4 py-2 text-xs font-medium text-primary-foreground">
-            Open Today
+            Discover founders
           </Link>
         </div>
       ) : (
