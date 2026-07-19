@@ -123,6 +123,32 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  useEffect(() => {
+    let cancelled = false;
+    let unsub: (() => void) | null = null;
+    // Wire a single supabase.auth.onAuthStateChange in the root so sign-in,
+    // sign-out, and user-updated events re-run route guards (which read
+    // account_role) and reset caches — from the browser only.
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      if (cancelled) return;
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        router.invalidate();
+        if (event === "SIGNED_OUT") {
+          queryClient.cancelQueries();
+          queryClient.clear();
+        } else {
+          queryClient.invalidateQueries();
+        }
+      });
+      unsub = () => data.subscription.unsubscribe();
+    });
+    return () => {
+      cancelled = true;
+      unsub?.();
+    };
+  }, [router, queryClient]);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
