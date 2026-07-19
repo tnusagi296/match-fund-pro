@@ -33,6 +33,7 @@ import { Route as AuthenticatedFounderIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as DemoFounderProfileRouteImport } from './routes/demo.founder.profile'
 import { Route as DemoFounderPreviewRouteImport } from './routes/demo.founder.preview'
+import { Route as DemoFounderClaimRouteImport } from './routes/demo.founder.claim'
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
 import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
@@ -168,6 +169,11 @@ const DemoFounderPreviewRoute = DemoFounderPreviewRouteImport.update({
   path: '/founder/preview',
   getParentRoute: () => DemoRoute,
 } as any)
+const DemoFounderClaimRoute = DemoFounderClaimRouteImport.update({
+  id: '/founder/claim',
+  path: '/founder/claim',
+  getParentRoute: () => DemoRoute,
+} as any)
 const AuthenticatedInvestorSettingsRoute =
   AuthenticatedInvestorSettingsRouteImport.update({
     id: '/settings',
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
   '/demo/founder/preview': typeof DemoFounderPreviewRoute
   '/demo/founder/profile': typeof DemoFounderProfileRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
   '/demo/founder/preview': typeof DemoFounderPreviewRoute
   '/demo/founder/profile': typeof DemoFounderProfileRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
   '/demo/founder/preview': typeof DemoFounderPreviewRoute
   '/demo/founder/profile': typeof DemoFounderProfileRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
+    | '/demo/founder/claim'
     | '/demo/founder/preview'
     | '/demo/founder/profile'
     | '/admin/'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
+    | '/demo/founder/claim'
     | '/demo/founder/preview'
     | '/demo/founder/profile'
     | '/admin'
@@ -443,6 +454,7 @@ export interface FileRouteTypes {
     | '/_authenticated/investor/discover'
     | '/_authenticated/investor/pipeline'
     | '/_authenticated/investor/settings'
+    | '/demo/founder/claim'
     | '/demo/founder/preview'
     | '/demo/founder/profile'
     | '/_authenticated/admin/'
@@ -641,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoFounderPreviewRouteImport
       parentRoute: typeof DemoRoute
     }
+    '/demo/founder/claim': {
+      id: '/demo/founder/claim'
+      path: '/founder/claim'
+      fullPath: '/demo/founder/claim'
+      preLoaderRoute: typeof DemoFounderClaimRouteImport
+      parentRoute: typeof DemoRoute
+    }
     '/_authenticated/investor/settings': {
       id: '/_authenticated/investor/settings'
       path: '/settings'
@@ -791,11 +810,13 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface DemoRouteChildren {
+  DemoFounderClaimRoute: typeof DemoFounderClaimRoute
   DemoFounderPreviewRoute: typeof DemoFounderPreviewRoute
   DemoFounderProfileRoute: typeof DemoFounderProfileRoute
 }
 
 const DemoRouteChildren: DemoRouteChildren = {
+  DemoFounderClaimRoute: DemoFounderClaimRoute,
   DemoFounderPreviewRoute: DemoFounderPreviewRoute,
   DemoFounderProfileRoute: DemoFounderProfileRoute,
 }
