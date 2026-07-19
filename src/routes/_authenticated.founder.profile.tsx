@@ -541,7 +541,7 @@ function ReviewStep({
           value={
             crawl.kind === "success"
               ? `${crawl.signalCount} attached`
-              : crawl.kind === "error"
+              : crawl.kind === "error" || crawl.kind === "timeout"
                 ? "Not analyzed"
                 : "Not yet run"
           }
