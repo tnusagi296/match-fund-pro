@@ -65,9 +65,9 @@ function WatchlistPage() {
       <div className="mb-6 flex items-end justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Investor</div>
-          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Saved</h1>
+          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Shortlist</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {items.length} founder{items.length === 1 ? "" : "s"} saved from your swipes.
+            {items.length} {items.length === 1 ? "founder" : "founders"} shortlisted.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs">
