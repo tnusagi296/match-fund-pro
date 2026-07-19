@@ -44,24 +44,51 @@ export async function loadPublishedGraphFounderCards(
     .in("source_entity_id", founderIds);
   assertNoError(founderRelationshipError, "founder relationship query");
 
-  const repositoryIds = unique(
-    (founderRelationships ?? [])
-      .filter((relationship) => relationship.relationship_type === "OWNS_REPOSITORY")
-      .map((relationship) => relationship.target_entity_id),
+  const firstHopEntityIds = unique(
+    (founderRelationships ?? []).map((relationship) => relationship.target_entity_id),
   );
-  let repositoryRelationships: NonNullable<typeof founderRelationships> = [];
-  if (repositoryIds.length > 0) {
+  let secondHopRelationships: NonNullable<typeof founderRelationships> = [];
+  if (firstHopEntityIds.length > 0) {
     const result = await client
       .from("graph_relationships")
       .select(
         "id,source_entity_id,target_entity_id,relationship_type,confidence,observed_at,properties",
       )
-      .in("source_entity_id", repositoryIds);
-    assertNoError(result.error, "repository relationship query");
-    repositoryRelationships = result.data ?? [];
+      .in("source_entity_id", firstHopEntityIds);
+    assertNoError(result.error, "second-hop relationship query");
+    secondHopRelationships = result.data ?? [];
   }
 
-  const relationshipRows = [...(founderRelationships ?? []), ...repositoryRelationships];
+  const hackathonIds = unique([
+    ...(founderRelationships ?? [])
+      .filter((relationship) => relationship.relationship_type === "PARTICIPATED_IN")
+      .map((relationship) => relationship.target_entity_id),
+    ...secondHopRelationships
+      .filter((relationship) =>
+        ["SUBMITTED_TO", "WON_AT", "FINALIST_AT", "RECEIVED_PRIZE_AT"].includes(
+          relationship.relationship_type,
+        ),
+      )
+      .map((relationship) => relationship.target_entity_id),
+  ]);
+  let organizerRelationships: NonNullable<typeof founderRelationships> = [];
+  if (hackathonIds.length > 0) {
+    const result = await client
+      .from("graph_relationships")
+      .select(
+        "id,source_entity_id,target_entity_id,relationship_type,confidence,observed_at,properties",
+      )
+      .eq("relationship_type", "ORGANIZED")
+      .in("target_entity_id", hackathonIds);
+    assertNoError(result.error, "organizer relationship query");
+    organizerRelationships = result.data ?? [];
+  }
+
+  const relationshipRows = [
+    ...(founderRelationships ?? []),
+    ...secondHopRelationships,
+    ...organizerRelationships,
+  ];
   const entityIds = unique([
     ...founderIds,
     ...relationshipRows.flatMap((relationship) => [
@@ -75,7 +102,7 @@ export async function loadPublishedGraphFounderCards(
     .in("id", entityIds);
   assertNoError(entityError, "entity query");
 
-  const claimSubjectIds = unique([...founderIds, ...repositoryIds]);
+  const claimSubjectIds = entityIds;
   const { data: claimRows, error: claimError } = await client
     .from("graph_claims")
     .select("id,subject_entity_id,predicate,value,status,trust_level,observed_at")
@@ -116,13 +143,16 @@ export async function loadPublishedGraphFounderCards(
     retrieved_at: string;
     excerpt: string;
     reliability: number;
+    page_title: string | null;
+    extraction_method: string;
+    trust_level: string;
     metadata: Database["public"]["Tables"]["graph_evidence"]["Row"]["metadata"];
   }> = [];
   if (evidenceIds.length > 0) {
     const result = await client
       .from("graph_evidence")
       .select(
-        "id,source_type,source_url,source_external_id,retrieved_at,excerpt,reliability,metadata",
+        "id,source_type,source_url,source_external_id,retrieved_at,excerpt,reliability,page_title,extraction_method,trust_level,metadata",
       )
       .in("id", evidenceIds);
     assertNoError(result.error, "evidence query");
@@ -163,24 +193,42 @@ export async function loadPublishedGraphFounderCards(
     retrievedAt: item.retrieved_at,
     excerpt: item.excerpt,
     reliability: item.reliability,
+    pageTitle: item.page_title,
+    extractionMethod: item.extraction_method,
+    trustLevel: item.trust_level as GraphEvidenceRecord["trustLevel"],
     metadata: item.metadata,
   }));
 
   return profiles.flatMap((profile) => {
     if (!profile.graph_entity_id) return [];
-    const ownedRepositoryIds = new Set(
+    const directTargetIds = new Set(
       relationships
-        .filter(
-          (relationship) =>
-            relationship.sourceEntityId === profile.graph_entity_id &&
-            relationship.relationshipType === "OWNS_REPOSITORY",
+        .filter((relationship) => relationship.sourceEntityId === profile.graph_entity_id)
+        .map((relationship) => relationship.targetEntityId),
+    );
+    const outboundRelationships = relationships.filter(
+      (relationship) =>
+        relationship.sourceEntityId === profile.graph_entity_id ||
+        directTargetIds.has(relationship.sourceEntityId),
+    );
+    const relevantHackathonIds = new Set(
+      outboundRelationships
+        .filter((relationship) =>
+          [
+            "PARTICIPATED_IN",
+            "SUBMITTED_TO",
+            "WON_AT",
+            "FINALIST_AT",
+            "RECEIVED_PRIZE_AT",
+          ].includes(relationship.relationshipType),
         )
         .map((relationship) => relationship.targetEntityId),
     );
     const relevantRelationships = relationships.filter(
       (relationship) =>
-        relationship.sourceEntityId === profile.graph_entity_id ||
-        ownedRepositoryIds.has(relationship.sourceEntityId),
+        outboundRelationships.includes(relationship) ||
+        (relationship.relationshipType === "ORGANIZED" &&
+          relevantHackathonIds.has(relationship.targetEntityId)),
     );
     const relevantRelationshipIds = new Set(
       relevantRelationships.map((relationship) => relationship.id),
@@ -192,11 +240,7 @@ export async function loadPublishedGraphFounderCards(
         relationship.targetEntityId,
       ]),
     ]);
-    const relevantClaims = claims.filter(
-      (claim) =>
-        claim.subjectEntityId === profile.graph_entity_id ||
-        ownedRepositoryIds.has(claim.subjectEntityId),
-    );
+    const relevantClaims = claims.filter((claim) => relevantEntityIds.has(claim.subjectEntityId));
     const relevantClaimIds = new Set(relevantClaims.map((claim) => claim.id));
     const relevantRelationshipEvidence = relationshipEvidenceRows.filter((link) =>
       relevantRelationshipIds.has(link.relationship_id),

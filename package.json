@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:graph": "bun test tests/graph.test.ts",
+    "test:graph": "bun test tests/graph.test.ts tests/hackathon-evidence.test.ts",
+    "test:hackathon": "bun test tests/hackathon-evidence.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

@@ -15,9 +15,18 @@ import {
   Upload,
   Zap,
   AlertCircle,
+  CircleHelp,
+  ExternalLink,
+  Link2,
+  ShieldCheck,
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { crawlFounderGraph, publishFounderProfile } from "@/lib/crawl.functions";
+import { ingestHackathonEvidence } from "@/lib/hackathon.functions";
+import type {
+  HackathonExtraction,
+  HackathonVerificationSummary,
+} from "@/lib/graph/hackathon-evidence.server";
 import type { GraphIngestionSummary } from "@/lib/graph/types";
 
 export const Route = createFileRoute("/me")({
@@ -42,6 +51,7 @@ const SOURCE_LABEL: Record<string, string> = {
   semantic_scholar: "Semantic Scholar",
   profile: "Profile",
   deck: "Deck",
+  hackathon: "Hackathon",
 };
 
 function FounderOnboarding() {
@@ -58,9 +68,23 @@ function FounderOnboarding() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  const [hackathon, setHackathon] = useState({
+    projectUrl: "",
+    eventUrl: "",
+    eventName: "",
+    projectName: "",
+    claimedRole: "",
+    claimedResult: "unknown" as "participant" | "finalist" | "winner" | "prize" | "unknown",
+  });
+  const [hackathonIngesting, setHackathonIngesting] = useState(false);
+  const [hackathonIngestion, setHackathonIngestion] = useState<GraphIngestionSummary | null>(null);
+  const [hackathonExtraction, setHackathonExtraction] = useState<HackathonExtraction | null>(null);
+  const [hackathonVerification, setHackathonVerification] =
+    useState<HackathonVerificationSummary | null>(null);
 
   const crawlFn = useServerFn(crawlFounderGraph);
   const publishFn = useServerFn(publishFounderProfile);
+  const hackathonFn = useServerFn(ingestHackathonEvidence);
 
   async function runCrawl() {
     if (!name.trim()) {
@@ -115,6 +139,47 @@ function FounderOnboarding() {
     }
   }
 
+  async function runHackathonIngestion() {
+    if (!profileId) {
+      setError("Import GitHub evidence first so the project can attach to your founder graph.");
+      return;
+    }
+    if (!hackathon.projectUrl.trim()) {
+      setError("Add a public project or submission URL.");
+      return;
+    }
+    setError(null);
+    setHackathonIngesting(true);
+    try {
+      const result = await hackathonFn({ data: { profileId, ...hackathon } });
+      setHackathonIngestion(result.ingestion);
+      setHackathonExtraction(result.extraction);
+      setHackathonVerification(result.verification);
+      setPublished(result.alreadyPublished);
+      const projectName =
+        result.extraction.project.name || hackathon.projectName || "Hackathon project";
+      const eventName = result.extraction.event.name || hackathon.eventName;
+      setSignals((current) => [
+        ...current.filter((signal) => signal.source !== "hackathon"),
+        {
+          source: "hackathon",
+          kind: "project_evidence",
+          title: eventName ? `Submitted ${projectName} to ${eventName}` : projectName,
+          detail:
+            result.verification.verified[0] ??
+            result.verification.selfReported[0] ??
+            "Public project evidence ingested.",
+          weight: 1,
+          evidence_url: result.extraction.project.canonicalUrl,
+        },
+      ]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Hackathon evidence ingestion failed");
+    } finally {
+      setHackathonIngesting(false);
+    }
+  }
+
   async function handlePublish() {
     if (!profileId) return;
     setPublishing(true);
@@ -136,8 +201,8 @@ function FounderOnboarding() {
           Build your profile
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          MatchFund turns live GitHub data into evidence-backed founder intelligence. arXiv and
-          Semantic Scholar remain optional supporting signals.
+          MatchFund turns live GitHub and founder-submitted project pages into evidence-backed
+          founder intelligence. arXiv and Semantic Scholar remain optional supporting signals.
         </p>
       </div>
 
@@ -330,6 +395,157 @@ function FounderOnboarding() {
                   </p>
                 </div>
               )}
+
+              <div className="mt-5 rounded-xl border border-cyan-300/25 bg-cyan-300/5 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Link2 className="h-4 w-4 text-cyan-300" /> Add hackathon project evidence
+                    </div>
+                    <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-muted-foreground">
+                      MatchFund fetches only the project URL and optional event URL below. Public
+                      source facts stay separate from founder-entered claims.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={runHackathonIngestion}
+                    disabled={!profileId || hackathonIngesting}
+                    className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-medium text-cyan-200 disabled:opacity-40"
+                  >
+                    {hackathonIngesting
+                      ? "Extracting…"
+                      : hackathonIngestion
+                        ? "Re-run evidence"
+                        : "Ingest evidence"}
+                  </button>
+                </div>
+
+                {!profileId && (
+                  <div className="mt-3 rounded-lg border border-dashed border-border p-3 text-[11px] text-muted-foreground">
+                    Start the GitHub crawl first. This creates the persistent founder entity that
+                    the project evidence will attach to.
+                  </div>
+                )}
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <Field label="Project or submission URL" icon={Link2}>
+                    <input
+                      value={hackathon.projectUrl}
+                      onChange={(event) =>
+                        setHackathon({ ...hackathon, projectUrl: event.target.value })
+                      }
+                      placeholder="https://devpost.com/software/…"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </Field>
+                  <Field label="Event URL (optional)" icon={Globe}>
+                    <input
+                      value={hackathon.eventUrl}
+                      onChange={(event) =>
+                        setHackathon({ ...hackathon, eventUrl: event.target.value })
+                      }
+                      placeholder="https://hackathon.example/events/…"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </Field>
+                  <Field label="Event name">
+                    <input
+                      value={hackathon.eventName}
+                      onChange={(event) =>
+                        setHackathon({ ...hackathon, eventName: event.target.value })
+                      }
+                      placeholder="Hack Nation 2026"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </Field>
+                  <Field label="Project name">
+                    <input
+                      value={hackathon.projectName}
+                      onChange={(event) =>
+                        setHackathon({ ...hackathon, projectName: event.target.value })
+                      }
+                      placeholder="MatchFund"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </Field>
+                  <Field label="Your claimed role">
+                    <input
+                      value={hackathon.claimedRole}
+                      onChange={(event) =>
+                        setHackathon({ ...hackathon, claimedRole: event.target.value })
+                      }
+                      placeholder="Built the Supabase data layer"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </Field>
+                  <Field label="Claimed result">
+                    <select
+                      value={hackathon.claimedResult}
+                      onChange={(event) =>
+                        setHackathon({
+                          ...hackathon,
+                          claimedResult: event.target.value as typeof hackathon.claimedResult,
+                        })
+                      }
+                      className="w-full bg-transparent text-sm outline-none"
+                    >
+                      <option value="unknown">Unknown</option>
+                      <option value="participant">Participant</option>
+                      <option value="finalist">Finalist</option>
+                      <option value="winner">Winner</option>
+                      <option value="prize">Prize</option>
+                    </select>
+                  </Field>
+                </div>
+
+                {hackathonIngestion && hackathonVerification && hackathonExtraction && (
+                  <div className="mt-4 space-y-3 border-t border-border/70 pt-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                      <span>
+                        {hackathonIngestion.projectsFound} project ·{" "}
+                        {hackathonIngestion.hackathonsFound} hackathon ·{" "}
+                        {hackathonIngestion.evidenceCreated} new evidence records
+                      </span>
+                      <a
+                        href={hackathonExtraction.project.canonicalUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-cyan-300 hover:underline"
+                      >
+                        Open public source <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <VerificationGroup
+                        title="Verified"
+                        icon={ShieldCheck}
+                        tone="text-mint"
+                        items={hackathonVerification.verified}
+                        empty="No source-confirmed facts yet."
+                      />
+                      <VerificationGroup
+                        title="Self-reported"
+                        icon={CircleHelp}
+                        tone="text-amber"
+                        items={hackathonVerification.selfReported}
+                        empty="No unsupported founder claims."
+                      />
+                      <VerificationGroup
+                        title="Unresolved"
+                        icon={AlertCircle}
+                        tone="text-muted-foreground"
+                        items={hackathonVerification.unresolved}
+                        empty="No unresolved fields."
+                      />
+                    </div>
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">
+                      Re-ingestion uses canonical URLs and content hashes. A zero in the “new”
+                      counters means existing graph records were updated or reused.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -411,7 +627,13 @@ function FounderOnboarding() {
                 <Perk
                   icon={Award}
                   title="Evidence records"
-                  value={ingestion ? String(ingestion.evidenceCreated) : "—"}
+                  value={
+                    ingestion
+                      ? String(
+                          ingestion.evidenceCreated + (hackathonIngestion?.evidenceCreated ?? 0),
+                        )
+                      : "—"
+                  }
                 />
                 <Perk icon={Cloud} title="Deck attached" value={deckName ? "Yes" : "No"} />
               </div>
@@ -465,6 +687,7 @@ function FounderOnboarding() {
             </div>
             <ul className="mt-2 space-y-1.5 text-xs text-muted-foreground">
               <li>· GitHub API — profile and public repositories</li>
+              <li>· Public project pages — bounded hackathon evidence extraction</li>
               <li>· Supabase graph — entities, claims and evidence paths</li>
               <li>· Semantic Scholar — papers, citations, h-index</li>
               <li>· arXiv — preprints under your name</li>
@@ -538,6 +761,35 @@ function SummaryMetric({ label, value }: { label: string; value: number }) {
       <div className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
+    </div>
+  );
+}
+
+function VerificationGroup({
+  title,
+  icon: Icon,
+  tone,
+  items,
+  empty,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: string;
+  items: string[];
+  empty: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/30 p-3">
+      <div
+        className={`flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider ${tone}`}
+      >
+        <Icon className="h-3.5 w-3.5" /> {title}
+      </div>
+      <ul className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-muted-foreground">
+        {(items.length > 0 ? items : [empty]).map((item) => (
+          <li key={item}>· {item}</li>
+        ))}
+      </ul>
     </div>
   );
 }

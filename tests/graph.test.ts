@@ -114,6 +114,9 @@ function snapshotFromResult(result: GraphIngestionResult): GraphProjectionSnapsh
       retrievedAt: evidence.retrievedAt,
       excerpt: evidence.excerpt,
       reliability: evidence.reliability,
+      pageTitle: evidence.pageTitle,
+      extractionMethod: evidence.extractionMethod,
+      trustLevel: evidence.trustLevel,
       metadata: evidence.metadata,
     })),
     relationshipEvidence: result.relationships.flatMap((relationship) =>

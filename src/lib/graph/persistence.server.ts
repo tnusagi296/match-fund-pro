@@ -152,6 +152,11 @@ export async function persistGraphIngestionWithStore(
       summary: {
         repositoriesFound: result.entities.filter((entity) => entity.entityType === "repository")
           .length,
+        projectsFound: result.entities.filter((entity) => entity.entityType === "project").length,
+        hackathonsFound: result.entities.filter((entity) => entity.entityType === "hackathon")
+          .length,
+        organizationsFound: result.entities.filter((entity) => entity.entityType === "organization")
+          .length,
         entitiesCreated: completed.entities,
         evidenceCreated: completed.evidence,
         relationshipsCreated: completed.relationships,
@@ -247,6 +252,9 @@ class SupabaseGraphStore implements GraphPersistenceStore {
       raw_payload: evidence.rawPayload,
       content_hash: evidence.contentHash,
       reliability: evidence.reliability,
+      page_title: evidence.pageTitle,
+      extraction_method: evidence.extractionMethod,
+      trust_level: evidence.trustLevel,
       metadata: evidence.metadata,
     };
     if (existing) {

@@ -1,16 +1,42 @@
 import type { Json } from "@/integrations/supabase/types";
 
-export type GraphEntityType = "founder" | "repository" | "project" | "skill" | "sector" | "source";
+export type GraphEntityType =
+  | "founder"
+  | "repository"
+  | "project"
+  | "hackathon"
+  | "organization"
+  | "skill"
+  | "sector"
+  | "source";
 
 export type GraphIdentifierScheme =
   | "github_user_id"
   | "github_login"
   | "github_repo_id"
   | "github_repo_full_name"
-  | "matchfund_profile_id";
+  | "matchfund_profile_id"
+  | "canonical_url"
+  | "project_url"
+  | "hackathon_url"
+  | "organization_url"
+  | "source_external_id";
 
 export type GraphRelationshipType =
-  "HAS_PROFILE" | "OWNS_REPOSITORY" | "BUILT" | "USES_LANGUAGE" | "FOCUSES_ON" | "SUPPORTED_BY";
+  | "HAS_PROFILE"
+  | "OWNS_REPOSITORY"
+  | "BUILT"
+  | "USES_LANGUAGE"
+  | "USES_TECHNOLOGY"
+  | "FOCUSES_ON"
+  | "SUPPORTED_BY"
+  | "PARTICIPATED_IN"
+  | "CONTRIBUTED_TO"
+  | "SUBMITTED_TO"
+  | "ORGANIZED"
+  | "WON_AT"
+  | "FINALIST_AT"
+  | "RECEIVED_PRIZE_AT";
 
 export type GraphClaimStatus = "supported" | "self_reported" | "unknown" | "contradicted";
 export type TrustLevel = "high" | "medium" | "low" | "unknown";
@@ -40,6 +66,9 @@ export type GraphEvidenceInput = {
   rawPayload: Json;
   contentHash: string;
   reliability: number;
+  pageTitle: string | null;
+  extractionMethod: string;
+  trustLevel: TrustLevel | "self_reported";
   metadata: Json;
 };
 
@@ -76,6 +105,9 @@ export type GraphIngestionResult = {
 
 export type GraphIngestionSummary = {
   repositoriesFound: number;
+  projectsFound: number;
+  hackathonsFound: number;
+  organizationsFound: number;
   entitiesCreated: number;
   evidenceCreated: number;
   relationshipsCreated: number;
@@ -107,6 +139,9 @@ export type GraphEvidenceRecord = {
   retrievedAt: string;
   excerpt: string;
   reliability: number;
+  pageTitle: string | null;
+  extractionMethod: string;
+  trustLevel: TrustLevel | "self_reported";
   metadata: Json;
 };
 
@@ -161,15 +196,52 @@ export type GraphSignal = {
 
 export type GraphEvidenceReference = {
   id: string;
-  kind: "profile" | "repository_ownership" | "language" | "topic" | "recent_activity";
+  kind:
+    | "profile"
+    | "repository_ownership"
+    | "language"
+    | "topic"
+    | "recent_activity"
+    | "hackathon_participation"
+    | "project_contribution"
+    | "project_submission"
+    | "hackathon_result"
+    | "project_technology"
+    | "hackathon_organizer";
   value: string;
   repositoryName: string | null;
+  entityName: string | null;
   graphStep: string;
+  supportStatus: GraphClaimStatus;
   evidenceExcerpt: string;
   sourceName: string;
   sourceUrl: string;
   trustLevel: TrustLevel;
   observedAt: string;
+};
+
+export type GraphHackathonSummary = {
+  entityId: string;
+  name: string;
+  url: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  organizer: string | null;
+  participationTrust: TrustLevel;
+};
+
+export type GraphProjectSummary = {
+  entityId: string;
+  name: string;
+  url: string | null;
+  description: string | null;
+  eventName: string | null;
+  role: string | null;
+  contributionTrust: TrustLevel;
+  resultType: "participant" | "finalist" | "winner" | "prize" | "unknown";
+  resultLabel: string | null;
+  resultTrust: TrustLevel;
+  technologies: string[];
 };
 
 export type GraphFounderCard = {
@@ -192,6 +264,12 @@ export type GraphFounderCard = {
   topSignals: GraphSignal[];
   evidenceReferences: GraphEvidenceReference[];
   repositoryText: string[];
+  hackathons: GraphHackathonSummary[];
+  projects: GraphProjectSummary[];
+  verifiedResults: string[];
+  roles: string[];
+  technologies: string[];
+  unsupportedClaims: string[];
   unknowns: string[];
   founderScoreLabel: "Insufficient evidence";
 };

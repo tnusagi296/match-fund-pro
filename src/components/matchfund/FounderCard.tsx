@@ -291,7 +291,8 @@ function GraphFounderSignalCard({
           Live graph profile
         </div>
         <div className="absolute right-4 top-4 rounded-full border border-border bg-background/70 px-2.5 py-1 text-[10px] text-muted-foreground backdrop-blur">
-          {founder.repositoryCount} repos · {founder.sourceCount} sources
+          {founder.repositoryCount} repos · {founder.projects.length} projects ·{" "}
+          {founder.sourceCount} sources
         </div>
         <div className="absolute -bottom-14 left-1/2 grid h-32 w-32 -translate-x-1/2 place-items-center overflow-hidden rounded-full border-4 border-card bg-elevated text-2xl font-semibold text-mint">
           {founder.avatarUrl ? (
@@ -325,15 +326,51 @@ function GraphFounderSignalCard({
         </p>
 
         <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-          {[...founder.mainLanguages, ...founder.topics].slice(0, 7).map((value) => (
-            <span
-              key={value}
-              className="rounded-full border border-border bg-elevated px-2.5 py-0.5 text-[11px] text-muted-foreground"
-            >
-              {value}
-            </span>
-          ))}
+          {[...founder.mainLanguages, ...founder.technologies, ...founder.topics]
+            .slice(0, 7)
+            .map((value, index) => (
+              <span
+                key={`${value}-${index}`}
+                className="rounded-full border border-border bg-elevated px-2.5 py-0.5 text-[11px] text-muted-foreground"
+              >
+                {value}
+              </span>
+            ))}
         </div>
+
+        {founder.projects.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            {founder.projects.slice(0, 2).map((project) => (
+              <div
+                key={project.entityId}
+                className="rounded-lg border border-border/60 bg-elevated/30 px-3 py-2 text-[10px] text-muted-foreground"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-foreground/90">
+                    {project.name}
+                    {project.eventName ? ` · ${project.eventName}` : ""}
+                  </span>
+                  <span className="shrink-0 uppercase tracking-wider">
+                    {project.contributionTrust} contribution trust
+                  </span>
+                </div>
+                {(project.role || project.resultType !== "unknown") && (
+                  <div className="mt-1">
+                    {project.role ? `Role: ${project.role}` : "Role unknown"}
+                    {project.resultType !== "unknown"
+                      ? ` · Result: ${project.resultLabel ?? project.resultType} (${project.resultTrust} trust)`
+                      : ""}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {founder.unsupportedClaims.length > 0 && (
+          <div className="mt-2 rounded-lg border border-dashed border-amber/30 bg-amber/5 px-3 py-2 text-[10px] leading-relaxed text-amber/90">
+            Unsupported or unresolved · {founder.unsupportedClaims.slice(0, 2).join(" · ")}
+          </div>
+        )}
 
         <div className="mt-5 rounded-2xl border border-mint/30 bg-mint-soft/30 p-3">
           <div className="flex items-start justify-between gap-4">
@@ -438,10 +475,12 @@ function GraphFounderSignalCard({
                   remain unknown.
                 </p>
               )}
-              {thesisFit.unknownCriteria.length > 0 && (
+              {thesisFit.unknownCriteria.length + founder.unknowns.length > 0 && (
                 <div className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">Unknowns · </span>
-                  {thesisFit.unknownCriteria.join(" · ")}
+                  {[...new Set([...thesisFit.unknownCriteria, ...founder.unknowns])]
+                    .slice(0, 8)
+                    .join(" · ")}
                 </div>
               )}
             </div>

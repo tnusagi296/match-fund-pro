@@ -243,38 +243,47 @@ export type Database = {
         Row: {
           content_hash: string;
           excerpt: string;
+          extraction_method: string;
           id: string;
           metadata: Json;
+          page_title: string | null;
           raw_payload: Json;
           reliability: number;
           retrieved_at: string;
           source_external_id: string | null;
           source_type: string;
           source_url: string;
+          trust_level: string;
         };
         Insert: {
           content_hash: string;
           excerpt: string;
+          extraction_method?: string;
           id?: string;
           metadata?: Json;
+          page_title?: string | null;
           raw_payload?: Json;
           reliability: number;
           retrieved_at: string;
           source_external_id?: string | null;
           source_type: string;
           source_url: string;
+          trust_level?: string;
         };
         Update: {
           content_hash?: string;
           excerpt?: string;
+          extraction_method?: string;
           id?: string;
           metadata?: Json;
+          page_title?: string | null;
           raw_payload?: Json;
           reliability?: number;
           retrieved_at?: string;
           source_external_id?: string | null;
           source_type?: string;
           source_url?: string;
+          trust_level?: string;
         };
         Relationships: [];
       };

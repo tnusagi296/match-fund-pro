@@ -277,6 +277,9 @@ export class GitHubGraphAdapter {
       rawPayload: userPayload,
       contentHash: userHash,
       reliability: 0.95,
+      pageTitle: `${user.name ?? user.login} (${user.login}) · GitHub`,
+      extractionMethod: "github_api",
+      trustLevel: "high",
       metadata: { sourceName: "GitHub profile", apiUrl: `${GITHUB_API}/users/${user.login}` },
     });
 
@@ -339,6 +342,9 @@ export class GitHubGraphAdapter {
         rawPayload: repositoryPayload,
         contentHash: repositoryHash,
         reliability: 0.95,
+        pageTitle: `${repository.full_name} · GitHub`,
+        extractionMethod: "github_api",
+        trustLevel: "high",
         metadata: {
           sourceName: "GitHub repository",
           apiUrl: `${GITHUB_API}/repositories/${repository.id}`,

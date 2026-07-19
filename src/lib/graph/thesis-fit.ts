@@ -75,17 +75,25 @@ function findReference(
   kinds: GraphEvidenceReference["kind"][],
   terms: string[] = [],
 ): GraphEvidenceReference | null {
-  return (
-    founder.evidenceReferences.find(
-      (reference) =>
-        kinds.includes(reference.kind) &&
+  for (const kind of kinds) {
+    const reference = founder.evidenceReferences.find(
+      (candidate) =>
+        candidate.kind === kind &&
+        candidate.supportStatus === "supported" &&
         (terms.length === 0 ||
           textMatches(
-            [reference.value, reference.repositoryName ?? "", reference.evidenceExcerpt].join(" "),
+            [
+              candidate.value,
+              candidate.repositoryName ?? "",
+              candidate.entityName ?? "",
+              candidate.evidenceExcerpt,
+            ].join(" "),
             terms,
           )),
-    ) ?? null
-  );
+    );
+    if (reference) return reference;
+  }
+  return null;
 }
 
 function pushUnique(values: string[], value: string) {
@@ -102,17 +110,26 @@ export function calculateGraphThesisFit(
   const criteria: Criterion[] = [];
 
   if (thesis.sectors.length > 0) {
-    if (founder.topics.length === 0) {
-      unknownCriteria.push("Sector/topic fit: repository topics are unavailable");
+    const supportedProjectTechnologies = founder.evidenceReferences
+      .filter(
+        (reference) =>
+          reference.kind === "project_technology" && reference.supportStatus === "supported",
+      )
+      .map((reference) => reference.value);
+    const graphTopics = [...founder.topics, ...supportedProjectTechnologies];
+    if (graphTopics.length === 0) {
+      unknownCriteria.push(
+        "Sector/topic fit: supported repository or project metadata is unavailable",
+      );
     } else {
       const matches = thesis.sectors.filter((sector) =>
-        founder.topics.some((topic) => textMatches(topic, termsFor(sector))),
+        graphTopics.some((topic) => textMatches(topic, termsFor(sector))),
       );
       criteria.push({ weight: 30, score: matches.length > 0 ? 100 : 0 });
       for (const sector of matches) {
         const criterion = `${sector} sector/topic overlap`;
         pushUnique(matchedCriteria, criterion);
-        const reference = findReference(founder, ["topic"], termsFor(sector));
+        const reference = findReference(founder, ["topic", "project_technology"], termsFor(sector));
         if (reference) paths.push(evidencePath(criterion, reference));
       }
     }
@@ -121,7 +138,9 @@ export function calculateGraphThesisFit(
   const keywords = [...new Set([...(thesis.keywords ?? []), ...thesis.sectors])];
   if (keywords.length > 0) {
     if (founder.repositoryText.length === 0) {
-      unknownCriteria.push("Keyword similarity: repository metadata is unavailable");
+      unknownCriteria.push(
+        "Keyword similarity: supported repository and project metadata is unavailable",
+      );
     } else {
       const matchingKeywords = keywords.filter((keyword) =>
         founder.repositoryText.some((text) => textMatches(text, termsFor(keyword))),
@@ -131,11 +150,18 @@ export function calculateGraphThesisFit(
         score: Math.round((matchingKeywords.length / Math.max(1, keywords.length)) * 100),
       });
       for (const keyword of matchingKeywords) {
-        const criterion = `Repository metadata matches “${keyword}”`;
+        const criterion = `Graph-backed project or repository metadata matches “${keyword}”`;
         pushUnique(matchedCriteria, criterion);
         const reference = findReference(
           founder,
-          ["topic", "language", "repository_ownership"],
+          [
+            "topic",
+            "language",
+            "repository_ownership",
+            "project_technology",
+            "project_submission",
+            "project_contribution",
+          ],
           termsFor(keyword),
         );
         if (reference) paths.push(evidencePath(criterion, reference));
@@ -148,13 +174,23 @@ export function calculateGraphThesisFit(
     if (founder.sourceCount === 0) {
       unknownCriteria.push("Technical-builder requirement: no usable public evidence");
     } else {
-      const technicalMatch = founder.repositoryCount > 0;
+      const supportedProjectBuild = Boolean(
+        findReference(founder, ["project_contribution", "project_technology"]),
+      );
+      const technicalMatch = founder.repositoryCount > 0 || supportedProjectBuild;
       criteria.push({ weight: 35, score: technicalMatch ? 100 : 0 });
       if (technicalMatch) {
-        const criterion = "Technical-builder requirement supported by public repositories";
+        const criterion = "Technical-builder requirement supported by public build evidence";
         pushUnique(matchedCriteria, criterion);
-        const technicalReferences = founder.evidenceReferences.filter((reference) =>
-          ["repository_ownership", "language", "recent_activity"].includes(reference.kind),
+        const technicalReferences = founder.evidenceReferences.filter(
+          (reference) =>
+            [
+              "repository_ownership",
+              "language",
+              "recent_activity",
+              "project_contribution",
+              "project_technology",
+            ].includes(reference.kind) && reference.supportStatus === "supported",
         );
         for (const reference of technicalReferences.slice(0, 3)) {
           paths.push(evidencePath(criterion, reference));
@@ -181,11 +217,33 @@ export function calculateGraphThesisFit(
 
   if (thesis.stages.length > 0) {
     if (!founder.stage) {
-      unknownCriteria.push("Stage: not provided");
+      const hackathonReference = thesis.stages.includes("Hackathon")
+        ? findReference(founder, ["project_submission", "hackathon_participation"])
+        : null;
+      if (hackathonReference) {
+        criteria.push({ weight: 5, score: 100 });
+        const criterion = "Hackathon-stage activity supported by public project evidence";
+        pushUnique(matchedCriteria, criterion);
+        paths.push(evidencePath(criterion, hackathonReference));
+      } else {
+        unknownCriteria.push("Stage: not provided");
+      }
     } else {
       const matched = thesis.stages.includes(founder.stage as Thesis["stages"][number]);
       criteria.push({ weight: 5, score: matched ? 100 : 0 });
       if (matched) pushUnique(matchedCriteria, `${founder.stage} stage`);
+    }
+  }
+
+  if (thesis.weights.traction > 0) {
+    const resultReference = findReference(founder, ["hackathon_result"]);
+    if (resultReference) {
+      criteria.push({ weight: 15, score: 100 });
+      const criterion = "Public source verifies a hackathon result";
+      pushUnique(matchedCriteria, criterion);
+      paths.push(evidencePath(criterion, resultReference));
+    } else if (founder.projects.length > 0) {
+      unknownCriteria.push("Hackathon result: no supported finalist, winner, or prize evidence");
     }
   }
 
@@ -202,7 +260,16 @@ export function calculateGraphThesisFit(
     ...new Map(
       paths.map((path) => [`${path.criterion}:${path.graphStep}:${path.sourceUrl}`, path]),
     ).values(),
-  ];
+  ].sort((a, b) => {
+    const priority = (path: EvidencePath) => {
+      if (/\b(WON_AT|FINALIST_AT|RECEIVED_PRIZE_AT)\b/.test(path.graphStep)) return 0;
+      if (/\bSUBMITTED_TO\b/.test(path.graphStep)) return 1;
+      if (/\bPARTICIPATED_IN\b/.test(path.graphStep)) return 2;
+      if (/\bUSES_TECHNOLOGY\b/.test(path.graphStep)) return 3;
+      return 4;
+    };
+    return priority(a) - priority(b);
+  });
 
   return {
     score,
