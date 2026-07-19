@@ -25,6 +25,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedInvestorIndexRouteImport } from './routes/_authenticated.investor.index'
 import { Route as AuthenticatedFounderIndexRouteImport } from './routes/_authenticated.founder.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
 import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
@@ -119,6 +120,11 @@ const AuthenticatedFounderIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedFounderRoute,
   } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedInvestorSettingsRoute =
   AuthenticatedInvestorSettingsRouteImport.update({
     id: '/settings',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/founder/': typeof AuthenticatedFounderIndexRoute
   '/investor/': typeof AuthenticatedInvestorIndexRoute
 }
@@ -216,7 +223,6 @@ export interface FileRoutesByTo {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -230,6 +236,7 @@ export interface FileRoutesByTo {
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/founder': typeof AuthenticatedFounderIndexRoute
   '/investor': typeof AuthenticatedInvestorIndexRoute
 }
@@ -259,6 +266,7 @@ export interface FileRoutesById {
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/founder/': typeof AuthenticatedFounderIndexRoute
   '/_authenticated/investor/': typeof AuthenticatedInvestorIndexRoute
 }
@@ -289,6 +297,7 @@ export interface FileRouteTypes {
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
+    | '/admin/'
     | '/founder/'
     | '/investor/'
   fileRoutesByTo: FileRoutesByTo
@@ -301,7 +310,6 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -315,6 +323,7 @@ export interface FileRouteTypes {
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
+    | '/admin'
     | '/founder'
     | '/investor'
   id:
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/_authenticated/investor/discover'
     | '/_authenticated/investor/pipeline'
     | '/_authenticated/investor/settings'
+    | '/_authenticated/admin/'
     | '/_authenticated/founder/'
     | '/_authenticated/investor/'
   fileRoutesById: FileRoutesById
@@ -477,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFounderIndexRouteImport
       parentRoute: typeof AuthenticatedFounderRoute
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/investor/settings': {
       id: '/_authenticated/investor/settings'
       path: '/settings'
@@ -552,10 +569,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminDiscoverRoute: typeof AuthenticatedAdminDiscoverRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminDiscoverRoute: AuthenticatedAdminDiscoverRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
