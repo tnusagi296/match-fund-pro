@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           deck_url: string | null
           github: string | null
+          graph_entity_id: string | null
           headline: string
           id: string
           linkedin: string | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           deck_url?: string | null
           github?: string | null
+          graph_entity_id?: string | null
           headline?: string
           id?: string
           linkedin?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           created_at?: string
           deck_url?: string | null
           github?: string | null
+          graph_entity_id?: string | null
           headline?: string
           id?: string
           linkedin?: string | null
@@ -57,7 +60,15 @@ export type Database = {
           summary?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "founder_profiles_graph_entity_id_fkey"
+            columns: ["graph_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       founder_signals: {
         Row: {
@@ -99,6 +110,271 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graph_claim_evidence: {
+        Row: {
+          claim_id: string
+          evidence_id: string
+        }
+        Insert: {
+          claim_id: string
+          evidence_id: string
+        }
+        Update: {
+          claim_id?: string
+          evidence_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_claim_evidence_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "graph_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_claim_evidence_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "graph_evidence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graph_claims: {
+        Row: {
+          created_at: string
+          id: string
+          observed_at: string
+          predicate: string
+          status: string
+          subject_entity_id: string
+          trust_level: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observed_at: string
+          predicate: string
+          status: string
+          subject_entity_id: string
+          trust_level: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observed_at?: string
+          predicate?: string
+          status?: string
+          subject_entity_id?: string
+          trust_level?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_claims_subject_entity_id_fkey"
+            columns: ["subject_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graph_entities: {
+        Row: {
+          canonical_key: string
+          canonical_name: string
+          created_at: string
+          entity_type: string
+          id: string
+          properties: Json
+          updated_at: string
+        }
+        Insert: {
+          canonical_key: string
+          canonical_name: string
+          created_at?: string
+          entity_type: string
+          id?: string
+          properties?: Json
+          updated_at?: string
+        }
+        Update: {
+          canonical_key?: string
+          canonical_name?: string
+          created_at?: string
+          entity_type?: string
+          id?: string
+          properties?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      graph_entity_identifiers: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          scheme: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          scheme: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          scheme?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_entity_identifiers_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graph_evidence: {
+        Row: {
+          content_hash: string
+          excerpt: string
+          extraction_method: string
+          id: string
+          metadata: Json
+          page_title: string | null
+          raw_payload: Json
+          reliability: number
+          retrieved_at: string
+          source_external_id: string | null
+          source_type: string
+          source_url: string
+          trust_level: string
+        }
+        Insert: {
+          content_hash: string
+          excerpt: string
+          extraction_method?: string
+          id?: string
+          metadata?: Json
+          page_title?: string | null
+          raw_payload?: Json
+          reliability: number
+          retrieved_at: string
+          source_external_id?: string | null
+          source_type: string
+          source_url: string
+          trust_level?: string
+        }
+        Update: {
+          content_hash?: string
+          excerpt?: string
+          extraction_method?: string
+          id?: string
+          metadata?: Json
+          page_title?: string | null
+          raw_payload?: Json
+          reliability?: number
+          retrieved_at?: string
+          source_external_id?: string | null
+          source_type?: string
+          source_url?: string
+          trust_level?: string
+        }
+        Relationships: []
+      }
+      graph_relationship_evidence: {
+        Row: {
+          evidence_id: string
+          relationship_id: string
+        }
+        Insert: {
+          evidence_id: string
+          relationship_id: string
+        }
+        Update: {
+          evidence_id?: string
+          relationship_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_relationship_evidence_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "graph_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_relationship_evidence_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "graph_relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graph_relationships: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          observed_at: string
+          properties: Json
+          relationship_type: string
+          source_entity_id: string
+          target_entity_id: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          id?: string
+          observed_at: string
+          properties?: Json
+          relationship_type: string
+          source_entity_id: string
+          target_entity_id: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          observed_at?: string
+          properties?: Json
+          relationship_type?: string
+          source_entity_id?: string
+          target_entity_id?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_relationships_source_entity_id_fkey"
+            columns: ["source_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_relationships_target_entity_id_fkey"
+            columns: ["target_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
             referencedColumns: ["id"]
           },
         ]
