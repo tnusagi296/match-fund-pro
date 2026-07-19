@@ -914,3 +914,20 @@ function formatShortDate(value: string | null): string {
 }
 
 // silence unused import warning if lint complains
+
+function DiscoverSkeleton({ message }: { message: string }) {
+  return (
+    <div className="py-10">
+      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
+        Discover
+      </div>
+      <div className="mt-2 h-8 w-2/3 animate-pulse rounded-lg bg-white/5" />
+      <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+      <div className="mt-6 grid grid-cols-[240px_minmax(0,1fr)_280px] gap-5">
+        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
+        <div className="h-[520px] animate-pulse rounded-2xl bg-white/5" />
+        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
+      </div>
+    </div>
+  );
+}
