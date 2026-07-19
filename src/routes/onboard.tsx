@@ -98,6 +98,22 @@ function OnboardPage() {
               />
             ))}
           </div>
+          <div className="ml-3">
+            {draft.status === "saving" && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+              </span>
+            )}
+            {draft.status === "saved" && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-mint">
+                <CheckCircle2 className="h-3 w-3" /> Saved
+              </span>
+            )}
+            {draft.status === "error" && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
+                <AlertTriangle className="h-3 w-3" /> Draft not synced
+              </span>
+            )}
         </div>
       </header>
 
