@@ -451,6 +451,29 @@ function SignalsStep({
         </div>
       )}
 
+      {state.kind === "timeout" && (
+        <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
+          <div className="flex items-center gap-2 text-amber-300">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">Analysis took too long to respond.</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Public sources can be slow. Try again — usually the second attempt completes.
+          </p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+            ref {state.requestId}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button className="btn-ghost" onClick={onRun}>
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Try again
+            </button>
+            <button className="btn-primary" onClick={onContinue}>
+              Continue with profile setup
+            </button>
+          </div>
+        </div>
+      )}
+
       {state.kind === "error" && (
         <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
           <div className="flex items-center gap-2 text-amber-300">
@@ -460,8 +483,17 @@ function SignalsStep({
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            You can retry, or continue setting up your profile and add public signals later.
+            {state.reason === "network"
+              ? "Looks like a connection hiccup. Check your network and retry."
+              : state.reason === "invalid_response"
+                ? "The analysis returned an unexpected shape. Retry, or continue and finish later."
+                : "You can retry, or continue setting up your profile and add public signals later."}
           </p>
+          {state.requestId && (
+            <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+              ref {state.requestId}
+            </p>
+          )}
           <div className="mt-3 flex gap-2">
             <button className="btn-ghost" onClick={onRun}>
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Try again
