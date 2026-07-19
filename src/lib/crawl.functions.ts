@@ -245,4 +245,6 @@ export const publishFounderProfile = createServerFn({ method: "POST" })
       profileId: profile.id,
       graphEntityId: profile.graph_entity_id,
     };
+
+
   });

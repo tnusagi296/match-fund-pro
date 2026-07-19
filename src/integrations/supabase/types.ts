@@ -1,6 +1,8 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5";
   };
@@ -65,7 +67,7 @@ export type Database = {
           {
             foreignKeyName: "founder_profiles_graph_entity_id_fkey";
             columns: ["graph_entity_id"];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: "graph_entities";
             referencedColumns: ["id"];
           },
@@ -548,7 +550,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      graph_entity_is_published: {
+        Args: { _entity_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -5,9 +5,10 @@ import { useEffect, useState, type ReactNode } from "react";
 // Trimmed to the Hooked loop: Today (Action + Reward), Saved (Investment record),
 // Thesis (Investment input). Everything else is reached from a card.
 const NAV_INVESTOR = [
-  { to: "/", label: "Today" },
-  { to: "/watchlist", label: "Saved" },
+  { to: "/", label: "Discover" },
+  { to: "/watchlist", label: "Shortlist" },
   { to: "/onboard", label: "Thesis" },
+  { to: "/admin/discover", label: "Crawl" },
 ];
 const NAV_FOUNDER = [
   { to: "/me", label: "Claim / enrich" },
