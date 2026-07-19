@@ -17,11 +17,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
-import { ScoreRing, ScoreBar } from "@/components/matchfund/ScoreRing";
-import { crawlAndScoreFounder, publishFounderProfile } from "@/lib/crawl.functions";
+import { crawlFounderGraph, publishFounderProfile } from "@/lib/crawl.functions";
+import type { GraphIngestionSummary } from "@/lib/graph/types";
 
 export const Route = createFileRoute("/me")({
-  head: () => ({ meta: [{ title: "My founder profile — Match Fund" }] }),
+  head: () => ({ meta: [{ title: "My founder profile — MatchFund" }] }),
   component: FounderOnboarding,
 });
 
@@ -34,16 +34,6 @@ type Signal = {
   detail?: string;
   weight: number;
   evidence_url?: string;
-};
-
-type Scores = {
-  founder_fit: number;
-  technical_moat: number;
-  traction: number;
-  trust: number;
-  overall: number;
-  summary: string;
-  highlights: string[];
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -64,12 +54,12 @@ function FounderOnboarding() {
   const [crawling, setCrawling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signals, setSignals] = useState<Signal[]>([]);
-  const [scores, setScores] = useState<Scores | null>(null);
+  const [ingestion, setIngestion] = useState<GraphIngestionSummary | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const crawlFn = useServerFn(crawlAndScoreFounder);
+  const crawlFn = useServerFn(crawlFounderGraph);
   const publishFn = useServerFn(publishFounderProfile);
 
   async function runCrawl() {
@@ -77,10 +67,14 @@ function FounderOnboarding() {
       setError("Add your name on step 1 first.");
       return;
     }
+    if (!links.github.trim()) {
+      setError("Add a GitHub username or full profile URL on step 1 first.");
+      return;
+    }
     setError(null);
     setCrawling(true);
     setSignals([]);
-    setScores(null);
+    setIngestion(null);
     try {
       const result = await crawlFn({
         data: {
@@ -93,8 +87,9 @@ function FounderOnboarding() {
         },
       });
       setSignals(result.signals);
-      setScores(result.scores);
+      setIngestion(result.ingestion);
       setProfileId(result.profileId);
+      setPublished(result.alreadyPublished);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Crawl failed");
     } finally {
@@ -105,7 +100,11 @@ function FounderOnboarding() {
   async function handleDeck(file: File | undefined) {
     if (!file) return;
     setDeckName(file.name);
-    if (file.type === "application/pdf" || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
+    if (
+      file.type === "application/pdf" ||
+      file.name.endsWith(".txt") ||
+      file.name.endsWith(".md")
+    ) {
       try {
         const text = await file.text();
         // strip binary noise; keep ASCII-ish
@@ -133,9 +132,12 @@ function FounderOnboarding() {
     <AppShell>
       <div className="mb-6">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Founder</div>
-        <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Build your profile</h1>
+        <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">
+          Build your profile
+        </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Match Fund crawls your public signals — GitHub, arXiv, Semantic Scholar — and scores you with AI.
+          MatchFund turns live GitHub data into evidence-backed founder intelligence. arXiv and
+          Semantic Scholar remain optional supporting signals.
         </p>
       </div>
 
@@ -161,7 +163,9 @@ function FounderOnboarding() {
                 {i < step ? <Check className="h-3 w-3" /> : i + 1}
               </div>
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Step {i + 1}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Step {i + 1}
+                </div>
                 <div className="text-xs font-medium">{s}</div>
               </div>
             </div>
@@ -171,6 +175,11 @@ function FounderOnboarding() {
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-8 rounded-2xl glass p-6">
+          {error && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+              <AlertCircle className="h-4 w-4" /> {error}
+            </div>
+          )}
           {step === 0 && (
             <div>
               <h2 className="text-lg font-medium">Who are you building?</h2>
@@ -234,18 +243,13 @@ function FounderOnboarding() {
                   disabled={crawling}
                   className="rounded-full bg-mint px-4 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
                 >
-                  {crawling ? "Crawling…" : scores ? "Re-run crawl" : "Start crawl"}
+                  {crawling ? "Crawling…" : ingestion ? "Re-run crawl" : "Start crawl"}
                 </button>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Live pull from GitHub (repos, stars, velocity), arXiv, and Semantic Scholar. Gemini scores the evidence.
+                Live GitHub repositories become graph entities, claims, relationships, and
+                source-linked evidence.
               </p>
-
-              {error && (
-                <div className="mt-4 flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
-                  <AlertCircle className="h-4 w-4" /> {error}
-                </div>
-              )}
 
               <div className="relative mt-6 overflow-hidden rounded-xl glass-subtle p-6">
                 {crawling && (
@@ -258,24 +262,38 @@ function FounderOnboarding() {
                   />
                 )}
                 <div className="space-y-2">
-                  {signals.map((s, i) => (
-                    <a
-                      key={i}
-                      href={s.evidence_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-3 rounded-lg border border-mint/20 bg-mint-soft/40 p-2.5 text-xs hover:border-mint/40"
-                    >
-                      <Sparkles className="h-3.5 w-3.5 text-mint" />
-                      <span className="rounded-full border border-mint/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-mint">
-                        {SOURCE_LABEL[s.source] ?? s.source}
-                      </span>
-                      <div className="flex-1">
-                        <div className="font-medium">{s.title}</div>
-                        {s.detail && <div className="text-muted-foreground">{s.detail}</div>}
+                  {signals.map((s, i) => {
+                    const content = (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 text-mint" />
+                        <span className="rounded-full border border-mint/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-mint">
+                          {SOURCE_LABEL[s.source] ?? s.source}
+                        </span>
+                        <div className="flex-1">
+                          <div className="font-medium">{s.title}</div>
+                          {s.detail && <div className="text-muted-foreground">{s.detail}</div>}
+                        </div>
+                      </>
+                    );
+                    return s.evidence_url ? (
+                      <a
+                        key={i}
+                        href={s.evidence_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-3 rounded-lg border border-mint/20 bg-mint-soft/40 p-2.5 text-xs hover:border-mint/40"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 rounded-lg border border-mint/20 bg-mint-soft/40 p-2.5 text-xs"
+                      >
+                        {content}
                       </div>
-                    </a>
-                  ))}
+                    );
+                  })}
                   {!crawling && signals.length === 0 && (
                     <div className="py-6 text-center text-xs text-muted-foreground">
                       No signals yet. Add your GitHub handle on step 1, then click Start crawl.
@@ -284,18 +302,32 @@ function FounderOnboarding() {
                 </div>
               </div>
 
-              {scores && (
-                <div className="mt-4 grid grid-cols-12 gap-4 rounded-xl border border-mint/30 bg-mint-soft/30 p-4">
-                  <div className="col-span-4 flex items-center justify-center">
-                    <ScoreRing value={scores.overall} size={140} stroke={8} sublabel="Overall" />
+              {ingestion && (
+                <div className="mt-4 rounded-xl border border-mint/30 bg-mint-soft/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Founder Score
+                      </div>
+                      <div className="mt-1 text-sm font-medium">Insufficient evidence</div>
+                    </div>
+                    <div className="text-right text-[10px] text-muted-foreground">
+                      Updated {new Date(ingestion.lastUpdated).toLocaleString()}
+                    </div>
                   </div>
-                  <div className="col-span-8 space-y-2">
-                    <ScoreBar label="Founder fit" value={scores.founder_fit} />
-                    <ScoreBar label="Technical moat" value={scores.technical_moat} />
-                    <ScoreBar label="Traction" value={scores.traction} />
-                    <ScoreBar label="Trust" value={scores.trust} />
+                  <div className="mt-4 grid grid-cols-4 gap-2">
+                    <SummaryMetric label="Repositories found" value={ingestion.repositoriesFound} />
+                    <SummaryMetric label="Evidence created" value={ingestion.evidenceCreated} />
+                    <SummaryMetric
+                      label="Relationships created"
+                      value={ingestion.relationshipsCreated}
+                    />
+                    <SummaryMetric label="Claims supported" value={ingestion.claimsSupported} />
                   </div>
-                  <div className="col-span-12 text-xs text-muted-foreground">{scores.summary}</div>
+                  <p className="mt-3 text-[11px] text-muted-foreground">
+                    Re-running the same profile upserts stable GitHub entities and may create zero
+                    new graph records.
+                  </p>
                 </div>
               )}
             </div>
@@ -305,7 +337,8 @@ function FounderOnboarding() {
             <div>
               <h2 className="text-lg font-medium">Upload your pitch</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Text or PDF — we extract highlights and feed them into your score.
+                Text or PDF — retained as founder-provided context, separate from GitHub-supported
+                claims.
               </p>
               <label className="mt-6 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-elevated/30 p-12 text-center transition hover:border-mint/40">
                 <div className="grid h-12 w-12 place-items-center rounded-full bg-mint-soft">
@@ -328,7 +361,7 @@ function FounderOnboarding() {
                 </div>
               )}
               <p className="mt-3 text-[11px] text-muted-foreground">
-                Re-run the crawl on step 2 after uploading to include deck signals in the score.
+                Re-run the crawl on step 2 after uploading to attach the self-reported deck signal.
               </p>
             </div>
           )}
@@ -348,26 +381,38 @@ function FounderOnboarding() {
                   <div className="text-xs text-muted-foreground">{headline || "Your headline"}</div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {signals.slice(0, 4).map((s, i) => (
-                      <span key={i} className="rounded-full border border-mint/30 bg-mint-soft px-2 py-0.5 text-[10px] text-mint">
+                      <span
+                        key={i}
+                        className="rounded-full border border-mint/30 bg-mint-soft px-2 py-0.5 text-[10px] text-mint"
+                      >
                         {s.title}
                       </span>
                     ))}
                   </div>
                 </div>
-                <ScoreRing value={scores?.overall ?? 0} size={90} stroke={6} />
+                <div className="rounded-xl border border-border bg-elevated/60 px-3 py-2 text-right">
+                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Founder Score
+                  </div>
+                  <div className="mt-1 text-xs font-medium">Insufficient evidence</div>
+                </div>
               </div>
-              {scores?.highlights && (
+              {signals.length > 0 && (
                 <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
-                  {scores.highlights.map((h, i) => (
+                  {signals.slice(0, 5).map((signal, i) => (
                     <li key={i} className="flex gap-2">
-                      <Check className="h-3.5 w-3.5 text-mint shrink-0 mt-0.5" /> {h}
+                      <Check className="h-3.5 w-3.5 text-mint shrink-0 mt-0.5" /> {signal.title}
                     </li>
                   ))}
                 </ul>
               )}
               <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
                 <Perk icon={Trophy} title="Signals found" value={String(signals.length)} />
-                <Perk icon={Award} title="Overall score" value={scores ? String(scores.overall) : "—"} />
+                <Perk
+                  icon={Award}
+                  title="Evidence records"
+                  value={ingestion ? String(ingestion.evidenceCreated) : "—"}
+                />
                 <Perk icon={Cloud} title="Deck attached" value={deckName ? "Yes" : "No"} />
               </div>
 
@@ -404,10 +449,10 @@ function FounderOnboarding() {
               </button>
             ) : (
               <Link
-                to="/grants"
+                to="/"
                 className="rounded-full bg-mint px-5 py-1.5 text-xs font-medium text-primary-foreground"
               >
-                Find grants →
+                View investor Today feed →
               </Link>
             )}
           </div>
@@ -419,10 +464,10 @@ function FounderOnboarding() {
               <Zap className="h-4 w-4 text-mint" /> Real pipeline
             </div>
             <ul className="mt-2 space-y-1.5 text-xs text-muted-foreground">
-              <li>· GitHub API — repos, stars, velocity</li>
+              <li>· GitHub API — profile and public repositories</li>
+              <li>· Supabase graph — entities, claims and evidence paths</li>
               <li>· Semantic Scholar — papers, citations, h-index</li>
               <li>· arXiv — preprints under your name</li>
-              <li>· Gemini 3.5 Flash — scoring & summary</li>
             </ul>
           </div>
           <div className="rounded-2xl glass p-5">
@@ -455,7 +500,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
       <div className="flex items-center gap-2 rounded-lg glass-subtle px-3 py-2 focus-within:border-mint/40">
         {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
         {children}
@@ -464,12 +511,33 @@ function Field({
   );
 }
 
-function Perk({ icon: Icon, title, value }: { icon: React.ComponentType<{ className?: string }>; title: string; value: string }) {
+function Perk({
+  icon: Icon,
+  title,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  value: string;
+}) {
   return (
     <div className="rounded-lg glass-subtle p-3">
       <Icon className="h-3.5 w-3.5 text-mint" />
-      <div className="mt-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{title}</div>
+      <div className="mt-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {title}
+      </div>
       <div className="mt-0.5 text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-elevated/60 p-3">
+      <div className="tabular text-lg font-semibold">{value}</div>
+      <div className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }

@@ -74,14 +74,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Match Fund — Founder intelligence for pre-seed & seed investors" },
+      { title: "MatchFund — Founder intelligence for pre-seed & seed investors" },
       {
         name: "description",
         content:
           "Swipe-style founder discovery for VCs. Evidence-backed scoring for founder fit, idea, traction, and trust — built for hackathon-sourced and pre-seed talent.",
       },
-      { name: "author", content: "Match Fund" },
-      { property: "og:title", content: "Match Fund — Founder intelligence for investors" },
+      { name: "author", content: "MatchFund" },
+      { property: "og:title", content: "MatchFund — Founder intelligence for investors" },
       {
         property: "og:description",
         content: "Swipe-style founder discovery with evidence-backed scoring for pre-seed & seed.",

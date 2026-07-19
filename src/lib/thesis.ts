@@ -8,6 +8,8 @@ import type { Founder, Sector, Stage } from "@/data/matchfund";
 export type Thesis = {
   stages: Stage[];
   sectors: Sector[];
+  keywords?: string[];
+  technicalBuilderRequired?: boolean;
   weights: { technical: number; traction: number; fmf: number };
   geos: string[]; // e.g. "US", "EU", "Asia", "LatAm", "Africa", "Remote"
   checkMin: number; // in $k
@@ -81,8 +83,10 @@ export function useThesis(): [Thesis | null, (t: Thesis) => void, boolean] {
 // Rough region mapping from location strings in mock data.
 function inferGeo(location: string): string {
   const l = location.toLowerCase();
-  if (/(san francisco|new york|austin|boston|seattle|remote us|,\s*(ca|ny|tx|ma|wa))/.test(l)) return "US";
-  if (/(london|berlin|paris|amsterdam|zurich|barcelona|dublin|stockholm|lisbon)/.test(l)) return "EU";
+  if (/(san francisco|new york|austin|boston|seattle|remote us|,\s*(ca|ny|tx|ma|wa))/.test(l))
+    return "US";
+  if (/(london|berlin|paris|amsterdam|zurich|barcelona|dublin|stockholm|lisbon)/.test(l))
+    return "EU";
   if (/(singapore|tokyo|seoul|shanghai|beijing|bangalore|mumbai|hong kong)/.test(l)) return "Asia";
   if (/(são paulo|sao paulo|mexico|buenos aires|santiago|bogot)/.test(l)) return "LatAm";
   if (/(lagos|nairobi|cape town|cairo|johannesburg)/.test(l)) return "Africa";
@@ -121,7 +125,8 @@ export function computeMatch(f: Founder, t: Thesis): MatchScore {
   if (sectorMatch && t.sectors.length) reasons.push(`${f.sector} sector`);
 
   // Technical depth signal: GitHub activity + prior projects + arXiv-ish.
-  const gh = f.signals.githubActivity === "High" ? 100 : f.signals.githubActivity === "Med" ? 65 : 35;
+  const gh =
+    f.signals.githubActivity === "High" ? 100 : f.signals.githubActivity === "Med" ? 65 : 35;
   const priors = Math.min(100, f.signals.priorProjects * 25);
   const technical = Math.round(gh * 0.6 + priors * 0.4);
   if (technical >= 80) reasons.push("Deep technical signal");
@@ -132,9 +137,7 @@ export function computeMatch(f: Founder, t: Thesis): MatchScore {
   if (f.signals.hackathonWins >= 2) reasons.push(`${f.signals.hackathonWins}× hackathon wins`);
 
   // Founder-Market Fit: trust score + fit breakdown domain/market.
-  const fmf = Math.round(
-    (f.scores.trust + f.fitBreakdown.domain + f.fitBreakdown.market) / 3,
-  );
+  const fmf = Math.round((f.scores.trust + f.fitBreakdown.domain + f.fitBreakdown.market) / 3);
   if (fmf >= 85) reasons.push("Strong founder-market fit");
 
   // Geography.

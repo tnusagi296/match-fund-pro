@@ -44,13 +44,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="grid h-9 w-9 place-items-center rounded-2xl border border-mint/30 bg-mint-soft ring-glow">
               <Target className="h-4 w-4 text-mint" strokeWidth={2.5} />
             </div>
-            <span className="text-[15px] font-semibold tracking-tight">Match Fund</span>
+            <span className="text-[15px] font-semibold tracking-tight">MatchFund</span>
           </Link>
 
           <nav className="hidden gap-0.5 md:flex glass-subtle rounded-full px-1 py-1">
             {nav.map((item) => {
-              const active =
-                item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+              const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
               return (
                 <Link
                   key={item.to + item.label}
@@ -71,10 +70,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="hidden max-w-md flex-1 items-center gap-2 rounded-full glass-subtle px-3.5 py-1.5 text-sm text-muted-foreground md:flex">
               <Search className="h-4 w-4" />
               <input
-                placeholder={role === "investor" ? "Search founders, companies, keywords" : "Search grants & programs"}
+                placeholder={
+                  role === "investor"
+                    ? "Search founders, companies, keywords"
+                    : "Search grants & programs"
+                }
                 className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground/70"
               />
-              <kbd className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px]">/</kbd>
+              <kbd className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px]">
+                /
+              </kbd>
             </div>
 
             <button

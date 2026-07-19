@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Bookmark,
   Eye,
@@ -14,33 +15,90 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { FounderCard } from "@/components/matchfund/FounderCard";
-import { discoveredSources, founders } from "@/data/matchfund";
-import { computeMatch, rankFounders, useThesis, saveThesis } from "@/lib/thesis";
+import { discoveredSources, founders, type Founder } from "@/data/matchfund";
+import { getPublishedGraphFounders } from "@/lib/graph/feed.functions";
+import { selectFounderFeed } from "@/lib/graph/feed-selection";
+import { rankGraphFounders } from "@/lib/graph/thesis-fit";
+import type {
+  GraphFounderCard as GraphFounderCardData,
+  RankedGraphFounder,
+} from "@/lib/graph/types";
+import { rankFounders, useThesis, saveThesis, type MatchScore } from "@/lib/thesis";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Today — Match Fund" }],
+    meta: [{ title: "Today — MatchFund" }],
   }),
   component: TodayDeck,
 });
 
 type Decision = "pass" | "watch" | "shortlist" | "contact";
 
+type RankedDiscovery =
+  | ({ kind: "graph" } & RankedGraphFounder)
+  | {
+      kind: "demo";
+      founder: Founder;
+      match: MatchScore;
+      discoveryPriority: number;
+    };
+
 const WATCHLIST_KEY = "matchfund:watchlist";
 
 function TodayDeck() {
   const navigate = useNavigate();
   const [thesis, setThesis, hydrated] = useThesis();
+  const graphFeedFn = useServerFn(getPublishedGraphFounders);
+  const [graphFounders, setGraphFounders] = useState<GraphFounderCardData[]>([]);
+  const [graphLoading, setGraphLoading] = useState(true);
+  const [graphError, setGraphError] = useState<string | null>(null);
 
   // Hooked · Trigger + Investment: send new investor into onboarding first.
   useEffect(() => {
     if (hydrated && !thesis) navigate({ to: "/onboard" });
   }, [hydrated, thesis, navigate]);
 
-  const ranked = useMemo(() => {
-    if (!thesis) return [];
-    return rankFounders(founders, thesis);
-  }, [thesis]);
+  useEffect(() => {
+    if (!hydrated) return;
+    let active = true;
+    setGraphLoading(true);
+    setGraphError(null);
+    graphFeedFn()
+      .then((records) => {
+        if (active) setGraphFounders(records);
+      })
+      .catch((error) => {
+        if (active) {
+          setGraphFounders([]);
+          setGraphError(
+            error instanceof Error ? error.message : "Graph founder feed failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setGraphLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [graphFeedFn, hydrated]);
+
+  const ranked = useMemo<RankedDiscovery[]>(() => {
+    if (!thesis || graphError) return [];
+    const graphRanked = rankGraphFounders(graphFounders, thesis);
+    const demoRanked = rankFounders(founders, thesis).map(({ founder, match }) => ({
+      kind: "demo" as const,
+      founder,
+      match,
+      discoveryPriority: match.total,
+    }));
+    const selection = selectFounderFeed(graphRanked, demoRanked);
+    return selection.mode === "graph"
+      ? selection.records.map((record) => ({ kind: "graph" as const, ...record }))
+      : selection.records;
+  }, [graphError, graphFounders, thesis]);
+
+  const usingDemoFallback = !graphError && !graphLoading && graphFounders.length === 0;
 
   const [idx, setIdx] = useState(0);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
@@ -141,21 +199,45 @@ function TodayDeck() {
     );
   }
 
+  if (graphLoading) {
+    return (
+      <AppShell>
+        <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
+          Loading published founder evidence…
+        </div>
+      </AppShell>
+    );
+  }
+
   const showCoachMark = !thesis.seenCoachMark && stats.reviewed === 0;
 
   return (
     <AppShell>
+      {graphError && (
+        <div className="mb-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+          <div className="font-medium">The graph-backed founder feed is unavailable.</div>
+          <div className="mt-1 text-xs text-rose-200/80">
+            {graphError} Demo profiles are not shown because an error does not prove the graph feed
+            is empty.
+          </div>
+        </div>
+      )}
+      {usingDemoFallback && (
+        <div className="mb-5 rounded-xl border border-amber/30 bg-amber/10 p-3 text-xs text-amber">
+          Demo fallback · no published graph-backed founders were found. Every card below is a Demo
+          profile and does not represent a live crawl.
+        </div>
+      )}
       {/* Trigger — the daily count that pulls the investor back */}
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
-            Today
-          </div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Today</div>
           <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">
             {ranked.length} founders match your thesis
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Ranked live · swipe right to save, left to pass · your thesis sharpens with every swipe
+            Sorted by Discovery Priority · Thesis Fit and evidence coverage remain separate from
+            Founder Score
           </p>
         </div>
         <Link
@@ -179,7 +261,10 @@ function TodayDeck() {
                 ["Saved", stats.shortlisted],
                 ["Watch", stats.watched],
               ].map(([l, v]) => (
-                <div key={l as string} className="rounded-xl border border-border/60 bg-elevated/60 p-3">
+                <div
+                  key={l as string}
+                  className="rounded-xl border border-border/60 bg-elevated/60 p-3"
+                >
                   <div className="tabular text-2xl font-semibold">{v}</div>
                   <div className="text-[11px] text-muted-foreground">{l}</div>
                 </div>
@@ -246,7 +331,7 @@ function TodayDeck() {
                 className="absolute inset-x-0 top-0 origin-top scale-[0.92] opacity-40"
                 style={{ transform: "translateY(28px) scale(0.9)" }}
               >
-                <FounderCard founder={next2.founder} hideScore />
+                <DiscoveryFounderCard item={next2} hideScore />
               </div>
             )}
             {next1 && (
@@ -254,7 +339,7 @@ function TodayDeck() {
                 className="absolute inset-x-0 top-0 origin-top scale-[0.96] opacity-70"
                 style={{ transform: "translateY(14px) scale(0.95)" }}
               >
-                <FounderCard founder={next1.founder} hideScore />
+                <DiscoveryFounderCard item={next1} hideScore />
               </div>
             )}
             {current ? (
@@ -282,10 +367,9 @@ function TodayDeck() {
                   opacity: exiting ? 0 : 1,
                 }}
               >
-                <FounderCard
-                  founder={current.founder}
+                <DiscoveryFounderCard
+                  item={current}
                   dragOffset={drag}
-                  match={current.match}
                   hideScore={!revealed && !exiting}
                 />
               </div>
@@ -320,8 +404,19 @@ function TodayDeck() {
             {[
               { key: "pass" as const, Icon: X, color: "var(--rose)", label: "Pass" },
               { key: "watch" as const, Icon: Eye, color: "var(--amber)", label: "Watch" },
-              { key: "shortlist" as const, Icon: Heart, color: "var(--mint)", label: "Save", primary: true },
-              { key: "contact" as const, Icon: MessageCircle, color: "oklch(0.72 0.16 260)", label: "Contact" },
+              {
+                key: "shortlist" as const,
+                Icon: Heart,
+                color: "var(--mint)",
+                label: "Save",
+                primary: true,
+              },
+              {
+                key: "contact" as const,
+                Icon: MessageCircle,
+                color: "oklch(0.72 0.16 260)",
+                label: "Contact",
+              },
             ].map(({ key, Icon, color, label, primary }) => (
               <button
                 key={key}
@@ -331,7 +426,9 @@ function TodayDeck() {
               >
                 <span
                   className={`grid h-14 w-14 place-items-center rounded-full border transition group-hover:scale-105 ${
-                    primary ? "border-mint bg-mint text-primary-foreground" : "border-border bg-card"
+                    primary
+                      ? "border-mint bg-mint text-primary-foreground"
+                      : "border-border bg-card"
                   }`}
                   style={{
                     color: primary ? undefined : color,
@@ -353,20 +450,35 @@ function TodayDeck() {
               Up next
             </div>
             <div className="mt-3 space-y-2">
-              {ranked.slice(idx + 1, idx + 6).map(({ founder: f, match }) => (
+              {ranked.slice(idx + 1, idx + 6).map((item) => (
                 <div
-                  key={f.id}
+                  key={item.founder.id}
                   className="flex items-center gap-2 rounded-lg border border-border/60 bg-elevated/60 p-2 text-xs"
                 >
                   <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-elevated">
-                    <img src={f.avatar} alt="" className="h-full w-full object-cover" />
+                    {founderAvatar(item) ? (
+                      <img
+                        src={founderAvatar(item) ?? undefined}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-[9px] font-medium text-mint">
+                        {founderInitials(item.founder.name)}
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{f.name}</div>
-                    <div className="truncate text-[10px] text-muted-foreground">{f.sector} · {f.stage}</div>
+                    <div className="truncate font-medium">{item.founder.name}</div>
+                    <div className="truncate text-[10px] text-muted-foreground">
+                      {founderSubtitle(item)}
+                    </div>
                   </div>
-                  <div className="tabular text-[11px] font-semibold text-mint blur-sm" title="Reveals when you reach this card">
-                    {match.total}
+                  <div
+                    className="tabular text-[11px] font-semibold text-mint blur-sm"
+                    title="Reveals when you reach this card"
+                  >
+                    {item.discoveryPriority}
                   </div>
                 </div>
               ))}
@@ -387,21 +499,31 @@ function TodayDeck() {
                 .filter(([, d]) => d === "shortlist" || d === "watch")
                 .slice(-3)
                 .map(([id, d]) => {
-                  const f = founders.find((x) => x.id === id);
-                  if (!f) return null;
+                  const item = ranked.find((candidate) => candidate.founder.id === id);
+                  if (!item) return null;
                   return (
-                    <Link
+                    <div
                       key={id}
-                      to="/founder/$id"
-                      params={{ id: f.id }}
-                      className="flex items-center gap-2 rounded-lg border border-border/60 bg-elevated/60 p-2 text-xs hover:border-mint/40"
+                      className="flex items-center gap-2 rounded-lg border border-border/60 bg-elevated/60 p-2 text-xs"
                     >
                       <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-elevated">
-                        <img src={f.avatar} alt="" className="h-full w-full object-cover" />
+                        {founderAvatar(item) ? (
+                          <img
+                            src={founderAvatar(item) ?? undefined}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid h-full w-full place-items-center text-[9px] font-medium text-mint">
+                            {founderInitials(item.founder.name)}
+                          </div>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{f.name}</div>
-                        <div className="truncate text-[10px] text-muted-foreground">{f.headline}</div>
+                        <div className="truncate font-medium">{item.founder.name}</div>
+                        <div className="truncate text-[10px] text-muted-foreground">
+                          {item.founder.headline}
+                        </div>
                       </div>
                       <span
                         className="rounded-full px-1.5 py-0.5 text-[9px] font-medium"
@@ -413,7 +535,7 @@ function TodayDeck() {
                       >
                         {d}
                       </span>
-                    </Link>
+                    </div>
                   );
                 })}
               {Object.keys(decisions).length === 0 && (
@@ -434,44 +556,64 @@ function TodayDeck() {
               Sourced
             </div>
             <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">
-              Founders discovered across the web
+              Founder evidence in this feed
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Auto-crawled from GitHub, hackathon leaderboards, arXiv and press — click any founder for the full profile.
+              {usingDemoFallback
+                ? "Demo profiles are shown only because the published graph feed is empty."
+                : "Published founders projected from stored GitHub graph evidence."}
             </p>
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {ranked.slice(0, 9).map(({ founder: f, match }) => (
-            <Link
-              key={f.id}
-              to="/founder/$id"
-              params={{ id: f.id }}
-              className="rounded-2xl glass p-4 transition hover:border-mint/40"
-            >
+          {ranked.slice(0, 9).map((item) => (
+            <div key={item.founder.id} className="rounded-2xl glass p-4">
               <div className="flex items-start gap-3">
-                <img src={f.avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
+                {founderAvatar(item) ? (
+                  <img
+                    src={founderAvatar(item) ?? undefined}
+                    alt=""
+                    className="h-11 w-11 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-elevated text-xs font-medium text-mint">
+                    {founderInitials(item.founder.name)}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <div className="truncate text-sm font-medium">{f.name}</div>
-                    <div className="tabular text-xs font-semibold text-mint">{match.total}</div>
+                    <div className="truncate text-sm font-medium">{item.founder.name}</div>
+                    <div className="tabular text-xs font-semibold text-mint">
+                      {item.discoveryPriority}
+                    </div>
                   </div>
-                  <div className="truncate text-xs text-muted-foreground">{f.headline}</div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {item.founder.headline}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {discoveredSources(f).slice(0, 3).map((s, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground"
-                  >
-                    {s.kind === "github" && <Github className="h-2.5 w-2.5" />}
-                    {s.kind === "hackathon" && <Trophy className="h-2.5 w-2.5 text-mint" />}
-                    {s.label}
-                  </span>
-                ))}
+                {item.kind === "graph" ? (
+                  <>
+                    <SourceChip
+                      icon="github"
+                      label={`${item.founder.repositoryCount} GitHub repositories`}
+                    />
+                    <SourceChip label={`${item.founder.sourceCount} evidence sources`} />
+                    <SourceChip label={`${item.founder.evidenceConfidence} Evidence Confidence`} />
+                  </>
+                ) : (
+                  <>
+                    <SourceChip label="Demo profile" />
+                    {discoveredSources(item.founder)
+                      .slice(0, 2)
+                      .map((source, index) => (
+                        <SourceChip key={index} icon={source.kind} label={source.label} />
+                      ))}
+                  </>
+                )}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
@@ -483,6 +625,61 @@ function TodayDeck() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+function DiscoveryFounderCard({
+  item,
+  dragOffset = 0,
+  hideScore = false,
+}: {
+  item: RankedDiscovery;
+  dragOffset?: number;
+  hideScore?: boolean;
+}) {
+  return item.kind === "graph" ? (
+    <FounderCard
+      founder={item.founder}
+      thesisFit={item.thesisFit}
+      discoveryPriority={item.discoveryPriority}
+      dragOffset={dragOffset}
+      hideScore={hideScore}
+    />
+  ) : (
+    <FounderCard
+      founder={item.founder}
+      match={item.match}
+      dragOffset={dragOffset}
+      hideScore={hideScore}
+    />
+  );
+}
+
+function founderAvatar(item: RankedDiscovery): string | null {
+  return item.kind === "graph" ? item.founder.avatarUrl : item.founder.avatar;
+}
+
+function founderInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function founderSubtitle(item: RankedDiscovery): string {
+  if (item.kind === "demo") return `${item.founder.sector} · ${item.founder.stage} · Demo`;
+  return `${item.founder.topics[0] ?? "Topic unknown"} · ${item.founder.evidenceConfidence} evidence`;
+}
+
+function SourceChip({ icon, label }: { icon?: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+      {icon === "github" && <Github className="h-2.5 w-2.5" />}
+      {icon === "hackathon" && <Trophy className="h-2.5 w-2.5 text-mint" />}
+      {label}
+    </span>
   );
 }
 
