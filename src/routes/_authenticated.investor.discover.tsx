@@ -518,7 +518,7 @@ function TodayDeck() {
                     <RotateCcw className="h-3.5 w-3.5" /> Restart queue
                   </button>
                   <Link
-                    to="/watchlist"
+                    to="/investor/pipeline"
                     className="rounded-full bg-mint px-4 py-2 text-sm font-medium text-primary-foreground"
                   >
                     Open Shortlist
