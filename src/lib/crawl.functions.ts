@@ -236,13 +236,13 @@ export const publishFounderProfile = createServerFn({ method: "POST" })
       .from("founder_profiles")
       .update({ published: true })
       .eq("id", data.profileId)
-      .not("graph_entity_id", "is", null)
-      .select("id,published,graph_entity_id")
+      .select("id,published")
       .single();
     if (error) throw new Error(`Founder publication failed: ${error.message}`);
     return {
       ok: profile.published,
       profileId: profile.id,
-      graphEntityId: profile.graph_entity_id,
+      graphEntityId: null as string | null,
     };
+
   });
