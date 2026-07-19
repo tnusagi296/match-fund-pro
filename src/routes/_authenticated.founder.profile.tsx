@@ -100,8 +100,8 @@ function FounderProfileEditor() {
         setStep(1);
         return;
       }
-      const result = await crawlFn({
-        data: {
+      const result = await runFounderCrawl(
+        {
           name: draft.payload.name || links.normalized.github.handle,
           headline: draft.payload.headline,
           github: links.normalized.github.handle,
@@ -109,20 +109,31 @@ function FounderProfileEditor() {
           site: links.normalized.site,
           deckText: draft.payload.deckText,
         },
-      });
+        { invoke: (args) => crawlFn(args as { data: unknown }) },
+      );
       setCrawl({
         kind: "success",
         github: links.normalized.github,
-        signalCount: result.signals.length,
+        signalCount: result.signalCount,
         profileId: result.profileId,
         alreadyPublished: result.alreadyPublished,
       });
     } catch (error) {
-      // Never expose stack traces / worker URLs / raw runtime messages.
-      // Log for observability, show a stable user-facing copy.
+      if (error instanceof CrawlError) {
+        if (error.failure.kind === "timeout") {
+          setCrawl({ kind: "timeout", requestId: error.failure.requestId });
+        } else {
+          setCrawl({
+            kind: "error",
+            requestId: error.failure.requestId,
+            reason: error.failure.kind,
+          });
+        }
+        return;
+      }
       // eslint-disable-next-line no-console
       console.warn("[founder-profile] signal crawl failed", error);
-      setCrawl({ kind: "error" });
+      setCrawl({ kind: "error", reason: "server" });
     }
   }
 
