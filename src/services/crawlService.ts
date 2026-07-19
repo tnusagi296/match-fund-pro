@@ -77,7 +77,7 @@ function assertCrawlResponse(payload: unknown): {
   };
 }
 
-type Invoker = (args: { data: CrawlInput; signal?: AbortSignal }) => Promise<unknown>;
+export type Invoker = (args: { data: CrawlInput; signal?: AbortSignal }) => Promise<unknown>;
 
 export async function runFounderCrawl(
   input: CrawlInput,

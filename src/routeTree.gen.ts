@@ -31,6 +31,9 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as AuthenticatedInvestorIndexRouteImport } from './routes/_authenticated.investor.index'
 import { Route as AuthenticatedFounderIndexRouteImport } from './routes/_authenticated.founder.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
+import { Route as DemoFounderProfileRouteImport } from './routes/demo.founder.profile'
+import { Route as DemoFounderPreviewRouteImport } from './routes/demo.founder.preview'
+import { Route as DemoFounderClaimRouteImport } from './routes/demo.founder.claim'
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
 import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
@@ -38,6 +41,7 @@ import { Route as AuthenticatedFounderSettingsRouteImport } from './routes/_auth
 import { Route as AuthenticatedFounderProfileRouteImport } from './routes/_authenticated.founder.profile'
 import { Route as AuthenticatedFounderPreviewRouteImport } from './routes/_authenticated.founder.preview'
 import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
+import { Route as AuthenticatedFounderClaimRouteImport } from './routes/_authenticated.founder.claim'
 import { Route as AuthenticatedAdminDiscoverRouteImport } from './routes/_authenticated.admin.discover'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -155,6 +159,21 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const DemoFounderProfileRoute = DemoFounderProfileRouteImport.update({
+  id: '/founder/profile',
+  path: '/founder/profile',
+  getParentRoute: () => DemoRoute,
+} as any)
+const DemoFounderPreviewRoute = DemoFounderPreviewRouteImport.update({
+  id: '/founder/preview',
+  path: '/founder/preview',
+  getParentRoute: () => DemoRoute,
+} as any)
+const DemoFounderClaimRoute = DemoFounderClaimRouteImport.update({
+  id: '/founder/claim',
+  path: '/founder/claim',
+  getParentRoute: () => DemoRoute,
+} as any)
 const AuthenticatedInvestorSettingsRoute =
   AuthenticatedInvestorSettingsRouteImport.update({
     id: '/settings',
@@ -197,6 +216,12 @@ const AuthenticatedFounderGrantsRoute =
     path: '/grants',
     getParentRoute: () => AuthenticatedFounderRoute,
   } as any)
+const AuthenticatedFounderClaimRoute =
+  AuthenticatedFounderClaimRouteImport.update({
+    id: '/claim',
+    path: '/claim',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
 const AuthenticatedAdminDiscoverRoute =
   AuthenticatedAdminDiscoverRouteImport.update({
     id: '/discover',
@@ -218,7 +243,7 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/demo': typeof DemoRoute
+  '/demo': typeof DemoRouteWithChildren
   '/grants': typeof GrantsRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
@@ -237,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/founder/claim': typeof AuthenticatedFounderClaimRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/founder/profile': typeof AuthenticatedFounderProfileRoute
@@ -244,6 +270,9 @@ export interface FileRoutesByFullPath {
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
+  '/demo/founder/preview': typeof DemoFounderPreviewRoute
+  '/demo/founder/profile': typeof DemoFounderProfileRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/founder/': typeof AuthenticatedFounderIndexRoute
   '/investor/': typeof AuthenticatedInvestorIndexRoute
@@ -251,7 +280,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/demo': typeof DemoRoute
+  '/demo': typeof DemoRouteWithChildren
   '/grants': typeof GrantsRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
@@ -267,6 +296,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/founder/claim': typeof AuthenticatedFounderClaimRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/founder/profile': typeof AuthenticatedFounderProfileRoute
@@ -274,6 +304,9 @@ export interface FileRoutesByTo {
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
+  '/demo/founder/preview': typeof DemoFounderPreviewRoute
+  '/demo/founder/profile': typeof DemoFounderProfileRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/founder': typeof AuthenticatedFounderIndexRoute
   '/investor': typeof AuthenticatedInvestorIndexRoute
@@ -283,7 +316,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
-  '/demo': typeof DemoRoute
+  '/demo': typeof DemoRouteWithChildren
   '/grants': typeof GrantsRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
@@ -302,6 +335,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/_authenticated/founder/claim': typeof AuthenticatedFounderClaimRoute
   '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/_authenticated/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/_authenticated/founder/profile': typeof AuthenticatedFounderProfileRoute
@@ -309,6 +343,9 @@ export interface FileRoutesById {
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
+  '/demo/founder/preview': typeof DemoFounderPreviewRoute
+  '/demo/founder/profile': typeof DemoFounderProfileRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/founder/': typeof AuthenticatedFounderIndexRoute
   '/_authenticated/investor/': typeof AuthenticatedInvestorIndexRoute
@@ -337,6 +374,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/discover'
+    | '/founder/claim'
     | '/founder/grants'
     | '/founder/preview'
     | '/founder/profile'
@@ -344,6 +382,9 @@ export interface FileRouteTypes {
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
+    | '/demo/founder/claim'
+    | '/demo/founder/preview'
+    | '/demo/founder/profile'
     | '/admin/'
     | '/founder/'
     | '/investor/'
@@ -367,6 +408,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/discover'
+    | '/founder/claim'
     | '/founder/grants'
     | '/founder/preview'
     | '/founder/profile'
@@ -374,6 +416,9 @@ export interface FileRouteTypes {
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
+    | '/demo/founder/claim'
+    | '/demo/founder/preview'
+    | '/demo/founder/profile'
     | '/admin'
     | '/founder'
     | '/investor'
@@ -401,6 +446,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/discover'
+    | '/_authenticated/founder/claim'
     | '/_authenticated/founder/grants'
     | '/_authenticated/founder/preview'
     | '/_authenticated/founder/profile'
@@ -408,6 +454,9 @@ export interface FileRouteTypes {
     | '/_authenticated/investor/discover'
     | '/_authenticated/investor/pipeline'
     | '/_authenticated/investor/settings'
+    | '/demo/founder/claim'
+    | '/demo/founder/preview'
+    | '/demo/founder/profile'
     | '/_authenticated/admin/'
     | '/_authenticated/founder/'
     | '/_authenticated/investor/'
@@ -417,7 +466,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
-  DemoRoute: typeof DemoRoute
+  DemoRoute: typeof DemoRouteWithChildren
   GrantsRoute: typeof GrantsRoute
   McpRoute: typeof McpRoute
   MeRoute: typeof MeRoute
@@ -590,6 +639,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/demo/founder/profile': {
+      id: '/demo/founder/profile'
+      path: '/founder/profile'
+      fullPath: '/demo/founder/profile'
+      preLoaderRoute: typeof DemoFounderProfileRouteImport
+      parentRoute: typeof DemoRoute
+    }
+    '/demo/founder/preview': {
+      id: '/demo/founder/preview'
+      path: '/founder/preview'
+      fullPath: '/demo/founder/preview'
+      preLoaderRoute: typeof DemoFounderPreviewRouteImport
+      parentRoute: typeof DemoRoute
+    }
+    '/demo/founder/claim': {
+      id: '/demo/founder/claim'
+      path: '/founder/claim'
+      fullPath: '/demo/founder/claim'
+      preLoaderRoute: typeof DemoFounderClaimRouteImport
+      parentRoute: typeof DemoRoute
+    }
     '/_authenticated/investor/settings': {
       id: '/_authenticated/investor/settings'
       path: '/settings'
@@ -639,6 +709,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFounderGrantsRouteImport
       parentRoute: typeof AuthenticatedFounderRoute
     }
+    '/_authenticated/founder/claim': {
+      id: '/_authenticated/founder/claim'
+      path: '/claim'
+      fullPath: '/founder/claim'
+      preLoaderRoute: typeof AuthenticatedFounderClaimRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
     '/_authenticated/admin/discover': {
       id: '/_authenticated/admin/discover'
       path: '/discover'
@@ -677,6 +754,7 @@ const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedFounderRouteChildren {
+  AuthenticatedFounderClaimRoute: typeof AuthenticatedFounderClaimRoute
   AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
   AuthenticatedFounderPreviewRoute: typeof AuthenticatedFounderPreviewRoute
   AuthenticatedFounderProfileRoute: typeof AuthenticatedFounderProfileRoute
@@ -685,6 +763,7 @@ interface AuthenticatedFounderRouteChildren {
 }
 
 const AuthenticatedFounderRouteChildren: AuthenticatedFounderRouteChildren = {
+  AuthenticatedFounderClaimRoute: AuthenticatedFounderClaimRoute,
   AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
   AuthenticatedFounderPreviewRoute: AuthenticatedFounderPreviewRoute,
   AuthenticatedFounderProfileRoute: AuthenticatedFounderProfileRoute,
@@ -730,11 +809,25 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface DemoRouteChildren {
+  DemoFounderClaimRoute: typeof DemoFounderClaimRoute
+  DemoFounderPreviewRoute: typeof DemoFounderPreviewRoute
+  DemoFounderProfileRoute: typeof DemoFounderProfileRoute
+}
+
+const DemoRouteChildren: DemoRouteChildren = {
+  DemoFounderClaimRoute: DemoFounderClaimRoute,
+  DemoFounderPreviewRoute: DemoFounderPreviewRoute,
+  DemoFounderProfileRoute: DemoFounderProfileRoute,
+}
+
+const DemoRouteWithChildren = DemoRoute._addFileChildren(DemoRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
-  DemoRoute: DemoRoute,
+  DemoRoute: DemoRouteWithChildren,
   GrantsRoute: GrantsRoute,
   McpRoute: McpRoute,
   MeRoute: MeRoute,
