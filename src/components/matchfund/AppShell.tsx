@@ -98,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       } catch {
         // ignore
       }
-      navigate({ to: "/auth", replace: true });
+      navigate({ to: "/auth", search: { next: "/" }, replace: true });
     }
   }
 
