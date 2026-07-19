@@ -285,7 +285,7 @@ function OnboardPage() {
 
         <div className="mt-10 flex items-center justify-between">
           <button
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            onClick={() => setStep(Math.max(0, step - 1))}
             disabled={step === 0}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-elevated/60 px-4 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-30"
           >
@@ -294,7 +294,7 @@ function OnboardPage() {
 
           {step < STEPS.length - 1 ? (
             <button
-              onClick={() => setStep((s) => s + 1)}
+              onClick={() => setStep(step + 1)}
               disabled={!canAdvance}
               className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"
             >
