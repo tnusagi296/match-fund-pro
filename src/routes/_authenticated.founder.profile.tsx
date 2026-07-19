@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { crawlFounderGraph, publishFounderProfile } from "@/lib/crawl.functions";
+import { runFounderCrawl, CrawlError } from "@/services/crawlService";
 import { useDraft, deleteServerDraft } from "@/lib/drafts";
 import { validateIdentityLinks, type GithubResult } from "@/lib/identity";
 
