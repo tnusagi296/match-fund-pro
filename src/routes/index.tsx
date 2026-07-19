@@ -836,4 +836,3 @@ function formatShortDate(value: string | null): string {
 }
 
 // silence unused import warning if lint complains
-void Github;
