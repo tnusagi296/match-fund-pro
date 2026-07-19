@@ -8,7 +8,6 @@ import {
   BookmarkCheck,
   Eye,
   FileWarning,
-  Github,
   RotateCcw,
   Sparkles,
   Target,
