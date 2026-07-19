@@ -56,7 +56,33 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = router.state.location.pathname;
-  const { nav, searchHint, home } = useMemo(() => navForPath(pathname), [pathname]);
+  const { nav, searchHint, home, role: pathRole } = useMemo(
+    () => navForPath(pathname),
+    [pathname],
+  );
+
+  // Load the actual stored role from user_profiles so the account chip reflects
+  // reality (not just the current path). Falls back to path-derived role for
+  // demo mode and while loading.
+  const [storedRole, setStoredRole] = useState<Role | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!alive || !data.user) return;
+      setAccountEmail(data.user.email ?? null);
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("account_role")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (alive) setStoredRole((profile?.account_role ?? null) as Role | null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const displayRole: Role = storedRole ?? pathRole;
 
   async function signOut() {
     try {
