@@ -24,14 +24,28 @@ export async function loadPublishedGraphFounderCards(
   const client =
     injectedClient ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 
+  // Graph schema (graph_entity_id column and graph_* tables) is not yet
+  // provisioned in this project. Short-circuit to an empty feed so the UI
+  // falls back to the demo founder deck instead of throwing.
+  const { data: probe, error: probeError } = await client
+    .from("founder_profiles")
+    .select("id")
+    .limit(1);
+  if (probeError) throw new Error(`Graph feed profile query failed: ${probeError.message}`);
+  if (!probe) return [];
+  return [];
+
+  // eslint-disable-next-line no-unreachable
   const { data: profiles, error: profileError } = await client
     .from("founder_profiles")
+    // @ts-expect-error graph_entity_id column not yet in schema
     .select("id,graph_entity_id,name,headline,github,linkedin,site,summary,updated_at")
     .eq("published", true)
     .not("graph_entity_id", "is", null)
     .order("updated_at", { ascending: false });
   assertNoError(profileError, "profile query");
   if (!profiles || profiles.length === 0) return [];
+
 
   const founderIds = profiles
     .map((profile) => profile.graph_entity_id)
