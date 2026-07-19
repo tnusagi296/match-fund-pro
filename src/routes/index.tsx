@@ -318,18 +318,19 @@ function TodayDeck() {
               Current thesis
             </div>
             <div className="mt-3 space-y-2 text-xs">
-              <ThesisRow label="Stage" values={thesis.stages} />
-              <ThesisRow label="Sector" values={thesis.sectors} />
+              <ThesisRow label="Stage" values={thesis?.stages ?? ["Demo mode"]} />
+              <ThesisRow label="Sector" values={thesis?.sectors ?? ["All sectors"]} />
               <ThesisRow
                 label="Geography"
-                values={thesis.geos.length ? thesis.geos : ["Global"]}
+                values={thesis?.geos?.length ? thesis.geos : ["Global"]}
               />
             </div>
             <Link
-              to="/onboard"
+              to={thesis ? "/onboard" : "/onboard"}
+              search={thesis ? { return: "settings" as const } : undefined}
               className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-lg border border-border/60 bg-elevated/50 py-1.5 text-[11px] font-medium text-mint hover:border-mint/40"
             >
-              Edit thesis
+              {thesis ? "Edit thesis" : "Set up thesis"}
             </Link>
           </div>
 
