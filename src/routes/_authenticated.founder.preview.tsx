@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Eye } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/founder/preview")({
-  head: () => ({ meta: [{ title: "How investors see me — MatchFund" }] }),
+  head: () => ({ meta: [{ title: "How Investors See Me — MatchFund" }] }),
   component: FounderPreviewPlaceholder,
 });
 
@@ -15,7 +15,7 @@ function FounderPreviewPlaceholder() {
           Founder
         </div>
         <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">
-          How investors see me
+          How Investors See Me
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           Preview your public profile as it appears in the investor Discover feed.
