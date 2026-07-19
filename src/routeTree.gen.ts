@@ -27,6 +27,7 @@ import { Route as AuthenticatedFounderIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
 import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
+import { Route as AuthenticatedFounderProfileRouteImport } from './routes/_authenticated.founder.profile'
 import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
 import { Route as AuthenticatedAdminDiscoverRouteImport } from './routes/_authenticated.admin.discover'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -128,6 +129,12 @@ const AuthenticatedInvestorDiscoverRoute =
     path: '/discover',
     getParentRoute: () => AuthenticatedInvestorRoute,
   } as any)
+const AuthenticatedFounderProfileRoute =
+  AuthenticatedFounderProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
 const AuthenticatedFounderGrantsRoute =
   AuthenticatedFounderGrantsRouteImport.update({
     id: '/grants',
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
+  '/founder/profile': typeof AuthenticatedFounderProfileRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
@@ -192,6 +200,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
+  '/founder/profile': typeof AuthenticatedFounderProfileRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
@@ -217,6 +226,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/discover': typeof AuthenticatedAdminDiscoverRoute
   '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
+  '/_authenticated/founder/profile': typeof AuthenticatedFounderProfileRoute
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/discover'
     | '/founder/grants'
+    | '/founder/profile'
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/discover'
     | '/founder/grants'
+    | '/founder/profile'
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
@@ -289,6 +301,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/discover'
     | '/_authenticated/founder/grants'
+    | '/_authenticated/founder/profile'
     | '/_authenticated/investor/discover'
     | '/_authenticated/investor/pipeline'
     | '/_authenticated/investor/settings'
@@ -440,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvestorDiscoverRouteImport
       parentRoute: typeof AuthenticatedInvestorRoute
     }
+    '/_authenticated/founder/profile': {
+      id: '/_authenticated/founder/profile'
+      path: '/profile'
+      fullPath: '/founder/profile'
+      preLoaderRoute: typeof AuthenticatedFounderProfileRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
     '/_authenticated/founder/grants': {
       id: '/_authenticated/founder/grants'
       path: '/grants'
@@ -473,11 +493,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedFounderRouteChildren {
   AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
+  AuthenticatedFounderProfileRoute: typeof AuthenticatedFounderProfileRoute
   AuthenticatedFounderIndexRoute: typeof AuthenticatedFounderIndexRoute
 }
 
 const AuthenticatedFounderRouteChildren: AuthenticatedFounderRouteChildren = {
   AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
+  AuthenticatedFounderProfileRoute: AuthenticatedFounderProfileRoute,
   AuthenticatedFounderIndexRoute: AuthenticatedFounderIndexRoute,
 }
 
