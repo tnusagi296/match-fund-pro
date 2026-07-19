@@ -9,11 +9,18 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test:graph": "bun test tests/graph.test.ts tests/hackathon-evidence.test.ts tests/discovery.test.ts tests/multi-source-discovery.test.ts",
+    "test:discovery": "bun test tests/discovery.test.ts",
+    "test:multi-source": "bun test tests/multi-source-discovery.test.ts",
+    "test:hackathon": "bun test tests/hackathon-evidence.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.12",
     "@hookform/resolvers": "^5.2.2",
+    "@lovable.dev/cloud-auth-js": "^1.1.2",
+    "@lovable.dev/mcp-js": "^0.23.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",

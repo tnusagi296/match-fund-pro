@@ -1,0 +1,17 @@
+{
+  "kind": "Listing",
+  "data": {
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "id": "fixture1",
+          "title": "Shipping an open climate data schema",
+          "selftext": "A short public project update.",
+          "permalink": "/r/climatetech/comments/fixture1/open_schema/",
+          "created_utc": 1784450000
+        }
+      }
+    ]
+  }
+}

@@ -7,6 +7,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -74,14 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Match Fund — Founder intelligence for pre-seed & seed investors" },
+      { title: "MatchFund — Founder intelligence for pre-seed & seed investors" },
       {
         name: "description",
         content:
           "Swipe-style founder discovery for VCs. Evidence-backed scoring for founder fit, idea, traction, and trust — built for hackathon-sourced and pre-seed talent.",
       },
-      { name: "author", content: "Match Fund" },
-      { property: "og:title", content: "Match Fund — Founder intelligence for investors" },
+      { name: "author", content: "MatchFund" },
+      { property: "og:title", content: "MatchFund — Founder intelligence for investors" },
       {
         property: "og:description",
         content: "Swipe-style founder discovery with evidence-backed scoring for pre-seed & seed.",
@@ -122,9 +123,36 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  useEffect(() => {
+    let cancelled = false;
+    let unsub: (() => void) | null = null;
+    // Wire a single supabase.auth.onAuthStateChange in the root so sign-in,
+    // sign-out, and user-updated events re-run route guards (which read
+    // account_role) and reset caches — from the browser only.
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      if (cancelled) return;
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        router.invalidate();
+        if (event === "SIGNED_OUT") {
+          queryClient.cancelQueries();
+          queryClient.clear();
+        } else {
+          queryClient.invalidateQueries();
+        }
+      });
+      unsub = () => data.subscription.unsubscribe();
+    });
+    return () => {
+      cancelled = true;
+      unsub?.();
+    };
+  }, [router, queryClient]);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
 }

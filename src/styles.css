@@ -158,3 +158,43 @@
 @utility text-mint {
   color: var(--mint);
 }
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background: var(--mint);
+  color: #062018;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 150ms ease;
+}
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background: oklch(1 0 0 / 0.06);
+  color: oklch(1 0 0 / 0.9);
+  border: 1px solid oklch(1 0 0 / 0.10);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  background: oklch(1 0 0 / 0.05);
+  border: 1px solid oklch(1 0 0 / 0.10);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  color: oklch(1 0 0 / 0.95);
+  outline: none;
+}
+.input:focus {
+  border-color: var(--mint);
+}

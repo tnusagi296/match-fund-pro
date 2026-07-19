@@ -1,9 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateText, NoObjectGeneratedError, Output } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import type { GraphIngestionResult } from "./graph/types";
 
-type Signal = {
+export type FounderSignal = {
   source: "github" | "arxiv" | "semantic_scholar" | "deck" | "profile";
   kind: string;
   title: string;
@@ -13,108 +12,86 @@ type Signal = {
 };
 
 const CrawlInput = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1, "Add your name before starting the crawl."),
   headline: z.string().default(""),
-  github: z.string().optional().default(""),
+  github: z
+    .string()
+    .trim()
+    .min(1, "A GitHub username or full GitHub profile URL is required for graph ingestion."),
   linkedin: z.string().optional().default(""),
   site: z.string().optional().default(""),
   deckText: z.string().optional().default(""),
 });
 
-function githubHandle(input: string): string | null {
-  if (!input) return null;
-  const m = input.trim().match(/(?:github\.com\/)?@?([A-Za-z0-9-]+)/);
-  return m?.[1] ?? null;
-}
+function graphSignals(result: GraphIngestionResult): FounderSignal[] {
+  const repositories = result.entities.filter((entity) => entity.entityType === "repository");
+  const languages = result.entities
+    .filter(
+      (entity) =>
+        entity.entityType === "skill" &&
+        entity.properties &&
+        typeof entity.properties === "object" &&
+        !Array.isArray(entity.properties) &&
+        entity.properties.category === "programming_language",
+    )
+    .map((entity) => entity.canonicalName);
+  const topics = result.entities
+    .filter((entity) => entity.entityType === "sector")
+    .map((entity) => entity.canonicalName);
+  const profileEvidence = result.evidence.find((item) => item.sourceType === "github_user");
+  const latestRepositoryEvidence = result.evidence
+    .filter((item) => item.sourceType === "github_repository")
+    .sort((a, b) => b.retrievedAt.localeCompare(a.retrievedAt))[0];
 
-async function crawlGitHub(handle: string): Promise<Signal[]> {
-  const signals: Signal[] = [];
-  const headers: Record<string, string> = { "User-Agent": "match-fund" };
-  const token = process.env.GITHUB_TOKEN;
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  try {
-    const userRes = await fetch(`https://api.github.com/users/${handle}`, { headers });
-    if (!userRes.ok) return signals;
-    const user = (await userRes.json()) as {
-      public_repos?: number;
-      followers?: number;
-      created_at?: string;
-      bio?: string;
-      html_url?: string;
-    };
-    signals.push({
+  const signals: FounderSignal[] = [
+    {
       source: "github",
       kind: "profile",
-      title: `GitHub: @${handle}`,
-      detail: `${user.public_repos ?? 0} public repos · ${user.followers ?? 0} followers · joined ${user.created_at?.slice(0, 4) ?? "?"}`,
-      weight: 2,
-      evidence_url: user.html_url,
-    });
+      title: "Live GitHub profile verified",
+      detail: profileEvidence?.excerpt,
+      weight: 1,
+      evidence_url: profileEvidence?.sourceUrl,
+    },
+    {
+      source: "github",
+      kind: "repositories",
+      title: `${repositories.length} public ${repositories.length === 1 ? "repository" : "repositories"} ingested`,
+      detail: "Repository ownership is supported by GitHub owner IDs; authorship is not inferred.",
+      weight: 1,
+      evidence_url: latestRepositoryEvidence?.sourceUrl ?? profileEvidence?.sourceUrl,
+    },
+  ];
 
-    const reposRes = await fetch(
-      `https://api.github.com/users/${handle}/repos?per_page=100&sort=pushed`,
-      { headers },
-    );
-    if (reposRes.ok) {
-      const repos = (await reposRes.json()) as Array<{
-        name: string;
-        stargazers_count: number;
-        language: string | null;
-        pushed_at: string;
-        html_url: string;
-        fork: boolean;
-      }>;
-      const owned = repos.filter((r) => !r.fork);
-      const totalStars = owned.reduce((s, r) => s + r.stargazers_count, 0);
-      const recent = owned.filter(
-        (r) => Date.now() - new Date(r.pushed_at).getTime() < 1000 * 60 * 60 * 24 * 90,
-      ).length;
-      if (totalStars > 0) {
-        signals.push({
-          source: "github",
-          kind: "stars",
-          title: `${totalStars} total GitHub stars`,
-          detail: `${owned.length} owned repos`,
-          weight: Math.min(5, 1 + Math.floor(Math.log10(totalStars + 1) * 1.5)),
-        });
-      }
-      if (recent > 0) {
-        signals.push({
-          source: "github",
-          kind: "velocity",
-          title: `${recent} repos updated in last 90 days`,
-          detail: "High commit velocity",
-          weight: Math.min(4, recent),
-        });
-      }
-      const top = [...owned].sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 3);
-      for (const r of top) {
-        if (r.stargazers_count < 3) continue;
-        signals.push({
-          source: "github",
-          kind: "repo",
-          title: `${r.name} (${r.stargazers_count}★)`,
-          detail: r.language ?? undefined,
-          weight: 1,
-          evidence_url: r.html_url,
-        });
-      }
-    }
-  } catch (err) {
-    console.error("github crawl failed", err);
+  if (languages.length > 0) {
+    signals.push({
+      source: "github",
+      kind: "languages",
+      title: `Languages: ${languages.slice(0, 5).join(", ")}`,
+      detail: "GitHub primary-language metadata",
+      weight: 1,
+      evidence_url: latestRepositoryEvidence?.sourceUrl,
+    });
+  }
+  if (topics.length > 0) {
+    signals.push({
+      source: "github",
+      kind: "topics",
+      title: `Topics: ${topics.slice(0, 5).join(", ")}`,
+      detail: "Founder-controlled GitHub repository metadata",
+      weight: 1,
+      evidence_url: latestRepositoryEvidence?.sourceUrl,
+    });
   }
   return signals;
 }
 
-async function crawlSemanticScholar(name: string): Promise<Signal[]> {
-  const signals: Signal[] = [];
+async function crawlSemanticScholar(name: string): Promise<FounderSignal[]> {
   try {
-    const res = await fetch(
+    const response = await fetch(
       `https://api.semanticscholar.org/graph/v1/author/search?query=${encodeURIComponent(name)}&limit=1&fields=name,paperCount,citationCount,hIndex,url`,
     );
-    if (!res.ok) return signals;
-    const json = (await res.json()) as {
+    if (!response.ok) return [];
+    const json = (await response.json()) as {
       data?: Array<{
         name: string;
         paperCount?: number;
@@ -124,128 +101,89 @@ async function crawlSemanticScholar(name: string): Promise<Signal[]> {
       }>;
     };
     const author = json.data?.[0];
-    if (author && (author.paperCount ?? 0) > 0) {
-      signals.push({
+    if (!author || (author.paperCount ?? 0) === 0) return [];
+    return [
+      {
         source: "semantic_scholar",
         kind: "publications",
         title: `${author.paperCount} publications`,
         detail: `${author.citationCount ?? 0} citations · h-index ${author.hIndex ?? 0}`,
-        weight: Math.min(5, 1 + Math.floor((author.hIndex ?? 0) / 2)),
+        weight: 1,
         evidence_url: author.url,
-      });
-    }
-  } catch (err) {
-    console.error("semantic scholar crawl failed", err);
+      },
+    ];
+  } catch (error) {
+    console.error("Semantic Scholar crawl failed", error);
+    return [];
   }
-  return signals;
 }
 
-async function crawlArxiv(name: string): Promise<Signal[]> {
-  const signals: Signal[] = [];
+async function crawlArxiv(name: string): Promise<FounderSignal[]> {
   try {
-    const res = await fetch(
-      `http://export.arxiv.org/api/query?search_query=au:%22${encodeURIComponent(name)}%22&max_results=5`,
+    const response = await fetch(
+      `https://export.arxiv.org/api/query?search_query=au:%22${encodeURIComponent(name)}%22&max_results=5`,
     );
-    if (!res.ok) return signals;
-    const xml = await res.text();
+    if (!response.ok) return [];
+    const xml = await response.text();
     const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) ?? [];
-    if (entries.length > 0) {
-      signals.push({
+    if (entries.length === 0) return [];
+    return [
+      {
         source: "arxiv",
         kind: "preprints",
-        title: `${entries.length} arXiv preprint${entries.length > 1 ? "s" : ""}`,
+        title: `${entries.length} arXiv preprint${entries.length === 1 ? "" : "s"}`,
         detail: entries
           .slice(0, 2)
-          .map((e) => e.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim().replace(/\s+/g, " "))
+          .map((entry) =>
+            entry
+              .match(/<title>([\s\S]*?)<\/title>/)?.[1]
+              ?.trim()
+              .replace(/\s+/g, " "),
+          )
           .filter(Boolean)
           .join(" · "),
-        weight: Math.min(3, entries.length),
-      });
-    }
-  } catch (err) {
-    console.error("arxiv crawl failed", err);
-  }
-  return signals;
-}
-
-const ScoreSchema = z.object({
-  founder_fit: z.number(),
-  technical_moat: z.number(),
-  traction: z.number(),
-  trust: z.number(),
-  overall: z.number(),
-  summary: z.string(),
-  highlights: z.array(z.string()),
-});
-
-async function scoreWithAI(
-  input: z.infer<typeof CrawlInput>,
-  signals: Signal[],
-): Promise<z.infer<typeof ScoreSchema>> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
-  const gateway = createLovableAiGatewayProvider(apiKey);
-  const model = gateway("google/gemini-3.5-flash");
-
-  const prompt = `You are an investor-grade analyst scoring a pre-seed / hackathon-stage founder.
-
-Founder: ${input.name}
-Headline: ${input.headline}
-Links: GitHub=${input.github || "none"} · LinkedIn=${input.linkedin || "none"} · Site=${input.site || "none"}
-
-Public signals we crawled:
-${signals.map((s, i) => `${i + 1}. [${s.source}/${s.kind}] ${s.title}${s.detail ? " — " + s.detail : ""}`).join("\n") || "(no signals found)"}
-
-${input.deckText ? `Pitch deck excerpt:\n${input.deckText.slice(0, 4000)}\n` : ""}
-
-Return JSON scores on a 0-100 scale. Be honest: no signals means low scores. Overall is a weighted average. Summary is 1-2 sentences. Highlights: 3-5 short evidence-backed bullets.`;
-
-  try {
-    const { output } = await generateText({
-      model,
-      output: Output.object({ schema: ScoreSchema }),
-      prompt,
-    });
-    return output;
+        weight: 1,
+        evidence_url: `https://arxiv.org/search/?query=${encodeURIComponent(name)}&searchtype=author`,
+      },
+    ];
   } catch (error) {
-    if (NoObjectGeneratedError.isInstance(error)) {
-      try {
-        const parsed = JSON.parse(error.text ?? "{}");
-        return ScoreSchema.parse(parsed);
-      } catch {
-        // fall through
-      }
-    }
-    // Fallback deterministic
-    const base = Math.min(100, signals.reduce((s, sig) => s + sig.weight * 6, 20));
-    return {
-      founder_fit: base,
-      technical_moat: base,
-      traction: Math.min(100, base - 10),
-      trust: base,
-      overall: base,
-      summary: `Auto-generated fallback: ${signals.length} public signals found for ${input.name}.`,
-      highlights: signals.slice(0, 4).map((s) => s.title),
-    };
+    console.error("arXiv crawl failed", error);
+    return [];
   }
 }
 
-export const crawlAndScoreFounder = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => CrawlInput.parse(data))
+export const crawlFounderGraph = createServerFn({ method: "POST" })
+  .validator((data: unknown) => CrawlInput.parse(data))
   .handler(async ({ data }) => {
-    const handle = githubHandle(data.github);
-    const [ghSignals, ssSignals, axSignals] = await Promise.all([
-      handle ? crawlGitHub(handle) : Promise.resolve([]),
-      crawlSemanticScholar(data.name),
-      crawlArxiv(data.name),
-    ]);
+    const [{ GitHubGraphAdapter }, persistence, semanticScholarSignals, arxivSignals] =
+      await Promise.all([
+        import("./graph/github-graph.server"),
+        import("./graph/persistence.server"),
+        crawlSemanticScholar(data.name),
+        crawlArxiv(data.name),
+      ]);
 
-    const signals: Signal[] = [...ghSignals, ...ssSignals, ...axSignals];
+    const adapter = new GitHubGraphAdapter({ token: process.env.GITHUB_TOKEN });
+    const graph = await adapter.ingest({
+      github: data.github,
+      founderName: data.name,
+      headline: data.headline,
+      linkedin: data.linkedin,
+      site: data.site,
+    });
+    const profile = await persistence.createOrUpdateFounderProfile(graph, data);
+    const persisted = await persistence.persistGraphIngestion(graph, profile.id);
+
+    const signals: FounderSignal[] = [
+      ...graphSignals(graph),
+      ...semanticScholarSignals,
+      ...arxivSignals,
+    ];
     if (data.linkedin) {
       signals.push({
         source: "profile",
         kind: "linkedin",
-        title: "LinkedIn provided",
+        title: "LinkedIn provided by founder",
         detail: data.linkedin,
         weight: 1,
         evidence_url: data.linkedin,
@@ -255,56 +193,58 @@ export const crawlAndScoreFounder = createServerFn({ method: "POST" })
       signals.push({
         source: "profile",
         kind: "site",
-        title: "Personal site provided",
+        title: "Personal site provided by founder",
         detail: data.site,
         weight: 1,
         evidence_url: data.site,
       });
     }
+    if (data.deckText.trim()) {
+      signals.push({
+        source: "deck",
+        kind: "founder_material",
+        title: "Founder-provided pitch material attached",
+        detail: "Self-reported material is kept separate from GitHub-supported graph claims.",
+        weight: 1,
+      });
+    }
 
-    const scores = await scoreWithAI(data, signals);
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile, error } = await supabaseAdmin
-      .from("founder_profiles")
-      .insert({
-        name: data.name,
-        headline: data.headline,
-        github: data.github || null,
-        linkedin: data.linkedin || null,
-        site: data.site || null,
-        scores,
-        summary: scores.summary,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-
-    if (signals.length > 0) {
-      await supabaseAdmin.from("founder_signals").insert(
-        signals.map((s) => ({
-          profile_id: profile.id,
-          source: s.source,
-          kind: s.kind,
-          title: s.title,
-          detail: s.detail ?? null,
-          weight: s.weight,
-          evidence_url: s.evidence_url ?? null,
-        })),
+    try {
+      await persistence.replaceLegacyFounderSignals(profile.id, signals);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Graph ingestion succeeded, but the legacy signal projection could not be refreshed: ${detail}`,
       );
     }
 
-    return { profileId: profile.id as string, scores, signals };
+    return {
+      profileId: profile.id,
+      graphEntityId: persisted.founderEntityId,
+      signals,
+      ingestion: persisted.summary,
+      founderScore: "Insufficient evidence" as const,
+      alreadyPublished: profile.published,
+    };
   });
 
 export const publishFounderProfile = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ profileId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ profileId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
+    const { data: profile, error } = await supabaseAdmin
       .from("founder_profiles")
-      .update({ published: true })
-      .eq("id", data.profileId);
-    if (error) throw error;
-    return { ok: true };
+      .update({ published: true, visibility_state: "published" })
+      .eq("id", data.profileId)
+      .not("graph_entity_id", "is", null)
+      .select("id,published,graph_entity_id")
+      .single();
+    if (error) throw new Error(`Founder publication failed: ${error.message}`);
+    return {
+      ok: profile.published,
+      profileId: profile.id,
+      graphEntityId: profile.graph_entity_id,
+    };
+
+
   });

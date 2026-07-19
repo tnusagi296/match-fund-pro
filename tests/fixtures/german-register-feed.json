@@ -1,0 +1,42 @@
+{
+  "records": [
+    {
+      "euid": "DE-HRB-123456",
+      "registerCourt": "Berlin-Charlottenburg",
+      "registerType": "HRB",
+      "registerNumber": "123456",
+      "legalName": "GreenStack GmbH",
+      "registrationDate": "2026-06-02",
+      "legalForm": "GmbH",
+      "location": "Berlin",
+      "businessPurpose": "Development of climate data infrastructure and developer tools.",
+      "officers": [
+        {
+          "name": "Alex Rivera",
+          "role": "managing_director",
+          "sourceId": "officer-7788"
+        }
+      ],
+      "website": "https://greenstack.example.test/"
+    },
+    {
+      "euid": "DE-HRB-999999",
+      "registerCourt": "Munich",
+      "registerType": "HRB",
+      "registerNumber": "999999",
+      "legalName": "Generic Holding GmbH",
+      "registrationDate": "2026-06-03",
+      "legalForm": "GmbH",
+      "location": "Munich",
+      "businessPurpose": "Holding and administration of company interests.",
+      "officers": [
+        {
+          "name": "Alex Rivera",
+          "role": "managing_director",
+          "sourceId": "officer-9999"
+        }
+      ],
+      "website": null
+    }
+  ]
+}

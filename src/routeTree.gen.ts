@@ -10,16 +10,60 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SelectRoleRouteImport } from './routes/select-role'
+import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as MeRouteImport } from './routes/me'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as GrantsRouteImport } from './routes/grants'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
 import { Route as CompanyIdRouteImport } from './routes/company.$id'
+import { Route as AuthenticatedInvestorRouteImport } from './routes/_authenticated.investor'
+import { Route as AuthenticatedFounderRouteImport } from './routes/_authenticated.founder'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AuthenticatedInvestorIndexRouteImport } from './routes/_authenticated.investor.index'
+import { Route as AuthenticatedFounderIndexRouteImport } from './routes/_authenticated.founder.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
+import { Route as DemoFounderProfileRouteImport } from './routes/demo.founder.profile'
+import { Route as DemoFounderPreviewRouteImport } from './routes/demo.founder.preview'
+import { Route as DemoFounderClaimRouteImport } from './routes/demo.founder.claim'
+import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
+import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
+import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
+import { Route as AuthenticatedFounderSettingsRouteImport } from './routes/_authenticated.founder.settings'
+import { Route as AuthenticatedFounderProfileRouteImport } from './routes/_authenticated.founder.profile'
+import { Route as AuthenticatedFounderPreviewRouteImport } from './routes/_authenticated.founder.preview'
+import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
+import { Route as AuthenticatedFounderClaimRouteImport } from './routes/_authenticated.founder.claim'
+import { Route as AuthenticatedAdminDiscoverRouteImport } from './routes/_authenticated.admin.discover'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelectRoleRoute = SelectRoleRouteImport.update({
+  id: '/select-role',
+  path: '/select-role',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardRoute = OnboardRouteImport.update({
+  id: '/onboard',
+  path: '/onboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -27,9 +71,28 @@ const MeRoute = MeRouteImport.update({
   path: '/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GrantsRoute = GrantsRouteImport.update({
   id: '/grants',
   path: '/grants',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -52,73 +115,372 @@ const CompanyIdRoute = CompanyIdRouteImport.update({
   path: '/company/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedInvestorRoute = AuthenticatedInvestorRouteImport.update({
+  id: '/investor',
+  path: '/investor',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFounderRoute = AuthenticatedFounderRouteImport.update({
+  id: '/founder',
+  path: '/founder',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedInvestorIndexRoute =
+  AuthenticatedInvestorIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedInvestorRoute,
+  } as any)
+const AuthenticatedFounderIndexRoute =
+  AuthenticatedFounderIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const DemoFounderProfileRoute = DemoFounderProfileRouteImport.update({
+  id: '/founder/profile',
+  path: '/founder/profile',
+  getParentRoute: () => DemoRoute,
+} as any)
+const DemoFounderPreviewRoute = DemoFounderPreviewRouteImport.update({
+  id: '/founder/preview',
+  path: '/founder/preview',
+  getParentRoute: () => DemoRoute,
+} as any)
+const DemoFounderClaimRoute = DemoFounderClaimRouteImport.update({
+  id: '/founder/claim',
+  path: '/founder/claim',
+  getParentRoute: () => DemoRoute,
+} as any)
+const AuthenticatedInvestorSettingsRoute =
+  AuthenticatedInvestorSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedInvestorRoute,
+  } as any)
+const AuthenticatedInvestorPipelineRoute =
+  AuthenticatedInvestorPipelineRouteImport.update({
+    id: '/pipeline',
+    path: '/pipeline',
+    getParentRoute: () => AuthenticatedInvestorRoute,
+  } as any)
+const AuthenticatedInvestorDiscoverRoute =
+  AuthenticatedInvestorDiscoverRouteImport.update({
+    id: '/discover',
+    path: '/discover',
+    getParentRoute: () => AuthenticatedInvestorRoute,
+  } as any)
+const AuthenticatedFounderSettingsRoute =
+  AuthenticatedFounderSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
+const AuthenticatedFounderProfileRoute =
+  AuthenticatedFounderProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
+const AuthenticatedFounderPreviewRoute =
+  AuthenticatedFounderPreviewRouteImport.update({
+    id: '/preview',
+    path: '/preview',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
+const AuthenticatedFounderGrantsRoute =
+  AuthenticatedFounderGrantsRouteImport.update({
+    id: '/grants',
+    path: '/grants',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
+const AuthenticatedFounderClaimRoute =
+  AuthenticatedFounderClaimRouteImport.update({
+    id: '/claim',
+    path: '/claim',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
+const AuthenticatedAdminDiscoverRoute =
+  AuthenticatedAdminDiscoverRouteImport.update({
+    id: '/discover',
+    path: '/discover',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/demo': typeof DemoRouteWithChildren
   '/grants': typeof GrantsRoute
+  '/mcp': typeof McpRoute
   '/me': typeof MeRoute
+  '/onboard': typeof OnboardRoute
+  '/select-role': typeof SelectRoleRoute
+  '/settings': typeof SettingsRoute
   '/watchlist': typeof WatchlistRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/founder': typeof AuthenticatedFounderRouteWithChildren
+  '/investor': typeof AuthenticatedInvestorRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/founder/claim': typeof AuthenticatedFounderClaimRoute
+  '/founder/grants': typeof AuthenticatedFounderGrantsRoute
+  '/founder/preview': typeof AuthenticatedFounderPreviewRoute
+  '/founder/profile': typeof AuthenticatedFounderProfileRoute
+  '/founder/settings': typeof AuthenticatedFounderSettingsRoute
+  '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
+  '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
+  '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
+  '/demo/founder/preview': typeof DemoFounderPreviewRoute
+  '/demo/founder/profile': typeof DemoFounderProfileRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/founder/': typeof AuthenticatedFounderIndexRoute
+  '/investor/': typeof AuthenticatedInvestorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/demo': typeof DemoRouteWithChildren
   '/grants': typeof GrantsRoute
+  '/mcp': typeof McpRoute
   '/me': typeof MeRoute
+  '/onboard': typeof OnboardRoute
+  '/select-role': typeof SelectRoleRoute
+  '/settings': typeof SettingsRoute
   '/watchlist': typeof WatchlistRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/founder/claim': typeof AuthenticatedFounderClaimRoute
+  '/founder/grants': typeof AuthenticatedFounderGrantsRoute
+  '/founder/preview': typeof AuthenticatedFounderPreviewRoute
+  '/founder/profile': typeof AuthenticatedFounderProfileRoute
+  '/founder/settings': typeof AuthenticatedFounderSettingsRoute
+  '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
+  '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
+  '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
+  '/demo/founder/preview': typeof DemoFounderPreviewRoute
+  '/demo/founder/profile': typeof DemoFounderProfileRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/founder': typeof AuthenticatedFounderIndexRoute
+  '/investor': typeof AuthenticatedInvestorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/demo': typeof DemoRouteWithChildren
   '/grants': typeof GrantsRoute
+  '/mcp': typeof McpRoute
   '/me': typeof MeRoute
+  '/onboard': typeof OnboardRoute
+  '/select-role': typeof SelectRoleRoute
+  '/settings': typeof SettingsRoute
   '/watchlist': typeof WatchlistRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/founder': typeof AuthenticatedFounderRouteWithChildren
+  '/_authenticated/investor': typeof AuthenticatedInvestorRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/_authenticated/founder/claim': typeof AuthenticatedFounderClaimRoute
+  '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
+  '/_authenticated/founder/preview': typeof AuthenticatedFounderPreviewRoute
+  '/_authenticated/founder/profile': typeof AuthenticatedFounderProfileRoute
+  '/_authenticated/founder/settings': typeof AuthenticatedFounderSettingsRoute
+  '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
+  '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
+  '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/demo/founder/claim': typeof DemoFounderClaimRoute
+  '/demo/founder/preview': typeof DemoFounderPreviewRoute
+  '/demo/founder/profile': typeof DemoFounderProfileRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/founder/': typeof AuthenticatedFounderIndexRoute
+  '/_authenticated/investor/': typeof AuthenticatedInvestorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/demo'
     | '/grants'
+    | '/mcp'
     | '/me'
+    | '/onboard'
+    | '/select-role'
+    | '/settings'
     | '/watchlist'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
+    | '/admin'
+    | '/founder'
+    | '/investor'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
+    | '/admin/discover'
+    | '/founder/claim'
+    | '/founder/grants'
+    | '/founder/preview'
+    | '/founder/profile'
+    | '/founder/settings'
+    | '/investor/discover'
+    | '/investor/pipeline'
+    | '/investor/settings'
+    | '/demo/founder/claim'
+    | '/demo/founder/preview'
+    | '/demo/founder/profile'
+    | '/admin/'
+    | '/founder/'
+    | '/investor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
+    | '/demo'
     | '/grants'
+    | '/mcp'
     | '/me'
+    | '/onboard'
+    | '/select-role'
+    | '/settings'
     | '/watchlist'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
+    | '/admin/discover'
+    | '/founder/claim'
+    | '/founder/grants'
+    | '/founder/preview'
+    | '/founder/profile'
+    | '/founder/settings'
+    | '/investor/discover'
+    | '/investor/pipeline'
+    | '/investor/settings'
+    | '/demo/founder/claim'
+    | '/demo/founder/preview'
+    | '/demo/founder/profile'
+    | '/admin'
+    | '/founder'
+    | '/investor'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/demo'
     | '/grants'
+    | '/mcp'
     | '/me'
+    | '/onboard'
+    | '/select-role'
+    | '/settings'
     | '/watchlist'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/admin'
+    | '/_authenticated/founder'
+    | '/_authenticated/investor'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/discover'
+    | '/_authenticated/founder/claim'
+    | '/_authenticated/founder/grants'
+    | '/_authenticated/founder/preview'
+    | '/_authenticated/founder/profile'
+    | '/_authenticated/founder/settings'
+    | '/_authenticated/investor/discover'
+    | '/_authenticated/investor/pipeline'
+    | '/_authenticated/investor/settings'
+    | '/demo/founder/claim'
+    | '/demo/founder/preview'
+    | '/demo/founder/profile'
+    | '/_authenticated/admin/'
+    | '/_authenticated/founder/'
+    | '/_authenticated/investor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  DemoRoute: typeof DemoRouteWithChildren
   GrantsRoute: typeof GrantsRoute
+  McpRoute: typeof McpRoute
   MeRoute: typeof MeRoute
+  OnboardRoute: typeof OnboardRoute
+  SelectRoleRoute: typeof SelectRoleRoute
+  SettingsRoute: typeof SettingsRoute
   WatchlistRoute: typeof WatchlistRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   CompanyIdRoute: typeof CompanyIdRoute
   FounderIdRoute: typeof FounderIdRoute
   IdeaIdRoute: typeof IdeaIdRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -130,6 +492,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WatchlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/select-role': {
+      id: '/select-role'
+      path: '/select-role'
+      fullPath: '/select-role'
+      preLoaderRoute: typeof SelectRoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboard': {
+      id: '/onboard'
+      path: '/onboard'
+      fullPath: '/onboard'
+      preLoaderRoute: typeof OnboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/me': {
       id: '/me'
       path: '/me'
@@ -137,11 +520,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/grants': {
       id: '/grants'
       path: '/grants'
       fullPath: '/grants'
       preLoaderRoute: typeof GrantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -172,18 +583,277 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/investor': {
+      id: '/_authenticated/investor'
+      path: '/investor'
+      fullPath: '/investor'
+      preLoaderRoute: typeof AuthenticatedInvestorRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/founder': {
+      id: '/_authenticated/founder'
+      path: '/founder'
+      fullPath: '/founder'
+      preLoaderRoute: typeof AuthenticatedFounderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/investor/': {
+      id: '/_authenticated/investor/'
+      path: '/'
+      fullPath: '/investor/'
+      preLoaderRoute: typeof AuthenticatedInvestorIndexRouteImport
+      parentRoute: typeof AuthenticatedInvestorRoute
+    }
+    '/_authenticated/founder/': {
+      id: '/_authenticated/founder/'
+      path: '/'
+      fullPath: '/founder/'
+      preLoaderRoute: typeof AuthenticatedFounderIndexRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/demo/founder/profile': {
+      id: '/demo/founder/profile'
+      path: '/founder/profile'
+      fullPath: '/demo/founder/profile'
+      preLoaderRoute: typeof DemoFounderProfileRouteImport
+      parentRoute: typeof DemoRoute
+    }
+    '/demo/founder/preview': {
+      id: '/demo/founder/preview'
+      path: '/founder/preview'
+      fullPath: '/demo/founder/preview'
+      preLoaderRoute: typeof DemoFounderPreviewRouteImport
+      parentRoute: typeof DemoRoute
+    }
+    '/demo/founder/claim': {
+      id: '/demo/founder/claim'
+      path: '/founder/claim'
+      fullPath: '/demo/founder/claim'
+      preLoaderRoute: typeof DemoFounderClaimRouteImport
+      parentRoute: typeof DemoRoute
+    }
+    '/_authenticated/investor/settings': {
+      id: '/_authenticated/investor/settings'
+      path: '/settings'
+      fullPath: '/investor/settings'
+      preLoaderRoute: typeof AuthenticatedInvestorSettingsRouteImport
+      parentRoute: typeof AuthenticatedInvestorRoute
+    }
+    '/_authenticated/investor/pipeline': {
+      id: '/_authenticated/investor/pipeline'
+      path: '/pipeline'
+      fullPath: '/investor/pipeline'
+      preLoaderRoute: typeof AuthenticatedInvestorPipelineRouteImport
+      parentRoute: typeof AuthenticatedInvestorRoute
+    }
+    '/_authenticated/investor/discover': {
+      id: '/_authenticated/investor/discover'
+      path: '/discover'
+      fullPath: '/investor/discover'
+      preLoaderRoute: typeof AuthenticatedInvestorDiscoverRouteImport
+      parentRoute: typeof AuthenticatedInvestorRoute
+    }
+    '/_authenticated/founder/settings': {
+      id: '/_authenticated/founder/settings'
+      path: '/settings'
+      fullPath: '/founder/settings'
+      preLoaderRoute: typeof AuthenticatedFounderSettingsRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
+    '/_authenticated/founder/profile': {
+      id: '/_authenticated/founder/profile'
+      path: '/profile'
+      fullPath: '/founder/profile'
+      preLoaderRoute: typeof AuthenticatedFounderProfileRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
+    '/_authenticated/founder/preview': {
+      id: '/_authenticated/founder/preview'
+      path: '/preview'
+      fullPath: '/founder/preview'
+      preLoaderRoute: typeof AuthenticatedFounderPreviewRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
+    '/_authenticated/founder/grants': {
+      id: '/_authenticated/founder/grants'
+      path: '/grants'
+      fullPath: '/founder/grants'
+      preLoaderRoute: typeof AuthenticatedFounderGrantsRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
+    '/_authenticated/founder/claim': {
+      id: '/_authenticated/founder/claim'
+      path: '/claim'
+      fullPath: '/founder/claim'
+      preLoaderRoute: typeof AuthenticatedFounderClaimRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
+    '/_authenticated/admin/discover': {
+      id: '/_authenticated/admin/discover'
+      path: '/discover'
+      fullPath: '/admin/discover'
+      preLoaderRoute: typeof AuthenticatedAdminDiscoverRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminDiscoverRoute: typeof AuthenticatedAdminDiscoverRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminDiscoverRoute: AuthenticatedAdminDiscoverRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedFounderRouteChildren {
+  AuthenticatedFounderClaimRoute: typeof AuthenticatedFounderClaimRoute
+  AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
+  AuthenticatedFounderPreviewRoute: typeof AuthenticatedFounderPreviewRoute
+  AuthenticatedFounderProfileRoute: typeof AuthenticatedFounderProfileRoute
+  AuthenticatedFounderSettingsRoute: typeof AuthenticatedFounderSettingsRoute
+  AuthenticatedFounderIndexRoute: typeof AuthenticatedFounderIndexRoute
+}
+
+const AuthenticatedFounderRouteChildren: AuthenticatedFounderRouteChildren = {
+  AuthenticatedFounderClaimRoute: AuthenticatedFounderClaimRoute,
+  AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
+  AuthenticatedFounderPreviewRoute: AuthenticatedFounderPreviewRoute,
+  AuthenticatedFounderProfileRoute: AuthenticatedFounderProfileRoute,
+  AuthenticatedFounderSettingsRoute: AuthenticatedFounderSettingsRoute,
+  AuthenticatedFounderIndexRoute: AuthenticatedFounderIndexRoute,
+}
+
+const AuthenticatedFounderRouteWithChildren =
+  AuthenticatedFounderRoute._addFileChildren(AuthenticatedFounderRouteChildren)
+
+interface AuthenticatedInvestorRouteChildren {
+  AuthenticatedInvestorDiscoverRoute: typeof AuthenticatedInvestorDiscoverRoute
+  AuthenticatedInvestorPipelineRoute: typeof AuthenticatedInvestorPipelineRoute
+  AuthenticatedInvestorSettingsRoute: typeof AuthenticatedInvestorSettingsRoute
+  AuthenticatedInvestorIndexRoute: typeof AuthenticatedInvestorIndexRoute
+}
+
+const AuthenticatedInvestorRouteChildren: AuthenticatedInvestorRouteChildren = {
+  AuthenticatedInvestorDiscoverRoute: AuthenticatedInvestorDiscoverRoute,
+  AuthenticatedInvestorPipelineRoute: AuthenticatedInvestorPipelineRoute,
+  AuthenticatedInvestorSettingsRoute: AuthenticatedInvestorSettingsRoute,
+  AuthenticatedInvestorIndexRoute: AuthenticatedInvestorIndexRoute,
+}
+
+const AuthenticatedInvestorRouteWithChildren =
+  AuthenticatedInvestorRoute._addFileChildren(
+    AuthenticatedInvestorRouteChildren,
+  )
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedFounderRoute: typeof AuthenticatedFounderRouteWithChildren
+  AuthenticatedInvestorRoute: typeof AuthenticatedInvestorRouteWithChildren
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedFounderRoute: AuthenticatedFounderRouteWithChildren,
+  AuthenticatedInvestorRoute: AuthenticatedInvestorRouteWithChildren,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
+interface DemoRouteChildren {
+  DemoFounderClaimRoute: typeof DemoFounderClaimRoute
+  DemoFounderPreviewRoute: typeof DemoFounderPreviewRoute
+  DemoFounderProfileRoute: typeof DemoFounderProfileRoute
+}
+
+const DemoRouteChildren: DemoRouteChildren = {
+  DemoFounderClaimRoute: DemoFounderClaimRoute,
+  DemoFounderPreviewRoute: DemoFounderPreviewRoute,
+  DemoFounderProfileRoute: DemoFounderProfileRoute,
+}
+
+const DemoRouteWithChildren = DemoRoute._addFileChildren(DemoRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthRoute: AuthRoute,
+  DemoRoute: DemoRouteWithChildren,
   GrantsRoute: GrantsRoute,
+  McpRoute: McpRoute,
   MeRoute: MeRoute,
+  OnboardRoute: OnboardRoute,
+  SelectRoleRoute: SelectRoleRoute,
+  SettingsRoute: SettingsRoute,
   WatchlistRoute: WatchlistRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   CompanyIdRoute: CompanyIdRoute,
   FounderIdRoute: FounderIdRoute,
   IdeaIdRoute: IdeaIdRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
