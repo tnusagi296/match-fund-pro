@@ -71,7 +71,7 @@ function OnboardPage() {
           <div className="grid h-9 w-9 place-items-center rounded-2xl border border-mint/30 bg-mint-soft ring-glow">
             <Target className="h-4 w-4 text-mint" strokeWidth={2.5} />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight">Match Fund</span>
+          <span className="text-[15px] font-semibold tracking-tight">MatchFund</span>
           <div className="ml-auto flex items-center gap-2">
             {STEPS.map((_, i) => (
               <span
@@ -87,7 +87,7 @@ function OnboardPage() {
 
       <main className="mx-auto max-w-2xl px-6 py-14">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
-          Onboarding · step {step + 1} of {STEPS.length}
+          {isEditing ? "Edit thesis · " : "Onboarding · "}Step {step + 1} of {STEPS.length}
         </div>
 
         {step === 0 && (
