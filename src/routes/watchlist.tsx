@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Building2, Sparkles, TrendingUp, Users2 } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { founders, type Founder } from "@/data/matchfund";
 import { computeMatch, useThesis } from "@/lib/thesis";
@@ -8,7 +9,7 @@ import { computeMatch, useThesis } from "@/lib/thesis";
 const WATCHLIST_KEY = "matchfund:watchlist";
 
 export const Route = createFileRoute("/watchlist")({
-  head: () => ({ meta: [{ title: "Saved — Match Fund" }] }),
+  head: () => ({ meta: [{ title: "Shortlist — MatchFund" }] }),
   component: WatchlistPage,
 });
 
@@ -30,6 +31,7 @@ function WatchlistPage() {
     const next = ids.filter((x) => x !== id);
     setIds(next);
     localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next));
+    toast.success("Removed from shortlist.");
   };
 
   const items: Founder[] = ids
@@ -65,9 +67,9 @@ function WatchlistPage() {
       <div className="mb-6 flex items-end justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Investor</div>
-          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Saved</h1>
+          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Shortlist</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {items.length} founder{items.length === 1 ? "" : "s"} saved from your swipes.
+            {items.length} {items.length === 1 ? "founder" : "founders"} shortlisted.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs">
@@ -104,7 +106,7 @@ function WatchlistPage() {
               {sectorMismatch ? (
                 <>
                   You save <b>{patterns.topSector}</b> but it's not in your thesis.{" "}
-                  <Link to="/onboard" className="text-mint">Update →</Link>
+                  <Link to="/onboard" search={{ return: "settings" as const }} className="text-mint">Update →</Link>
                 </>
               ) : (
                 <>Your saves align with your thesis.</>
@@ -117,12 +119,13 @@ function WatchlistPage() {
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-16 text-center">
           <Bookmark className="mx-auto h-8 w-8 text-muted-foreground" />
-          <div className="mt-3 text-sm font-medium">Nothing saved yet</div>
+          <div className="mt-3 text-sm font-medium">No founders shortlisted yet.</div>
           <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
-            Swipe right on founders in Today to save them here.
+            Discover founders matched to your investment thesis and add the most promising
+            profiles to your shortlist.
           </p>
           <Link to="/" className="mt-4 inline-block rounded-full bg-mint px-4 py-2 text-xs font-medium text-primary-foreground">
-            Open Today
+            Discover founders
           </Link>
         </div>
       ) : (
