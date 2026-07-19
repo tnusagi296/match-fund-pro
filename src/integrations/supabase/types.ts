@@ -695,7 +695,7 @@ export type Database = {
       }
       user_profiles: {
         Row: {
-          account_role: Database["public"]["Enums"]["account_role"]
+          account_role: Database["public"]["Enums"]["account_role"] | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -705,7 +705,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          account_role?: Database["public"]["Enums"]["account_role"]
+          account_role?: Database["public"]["Enums"]["account_role"] | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -715,7 +715,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          account_role?: Database["public"]["Enums"]["account_role"]
+          account_role?: Database["public"]["Enums"]["account_role"] | null
           created_at?: string
           email?: string | null
           full_name?: string | null
