@@ -27,6 +27,7 @@ import { Route as AuthenticatedFounderIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
 import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
+import { Route as AuthenticatedFounderSettingsRouteImport } from './routes/_authenticated.founder.settings'
 import { Route as AuthenticatedFounderProfileRouteImport } from './routes/_authenticated.founder.profile'
 import { Route as AuthenticatedFounderPreviewRouteImport } from './routes/_authenticated.founder.preview'
 import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
@@ -130,6 +131,12 @@ const AuthenticatedInvestorDiscoverRoute =
     path: '/discover',
     getParentRoute: () => AuthenticatedInvestorRoute,
   } as any)
+const AuthenticatedFounderSettingsRoute =
+  AuthenticatedFounderSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
 const AuthenticatedFounderProfileRoute =
   AuthenticatedFounderProfileRouteImport.update({
     id: '/profile',
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/founder/profile': typeof AuthenticatedFounderProfileRoute
+  '/founder/settings': typeof AuthenticatedFounderSettingsRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/founder/profile': typeof AuthenticatedFounderProfileRoute
+  '/founder/settings': typeof AuthenticatedFounderSettingsRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
@@ -237,6 +246,7 @@ export interface FileRoutesById {
   '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/_authenticated/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/_authenticated/founder/profile': typeof AuthenticatedFounderProfileRoute
+  '/_authenticated/founder/settings': typeof AuthenticatedFounderSettingsRoute
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/founder/grants'
     | '/founder/preview'
     | '/founder/profile'
+    | '/founder/settings'
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/founder/grants'
     | '/founder/preview'
     | '/founder/profile'
+    | '/founder/settings'
     | '/investor/discover'
     | '/investor/pipeline'
     | '/investor/settings'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/founder/grants'
     | '/_authenticated/founder/preview'
     | '/_authenticated/founder/profile'
+    | '/_authenticated/founder/settings'
     | '/_authenticated/investor/discover'
     | '/_authenticated/investor/pipeline'
     | '/_authenticated/investor/settings'
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvestorDiscoverRouteImport
       parentRoute: typeof AuthenticatedInvestorRoute
     }
+    '/_authenticated/founder/settings': {
+      id: '/_authenticated/founder/settings'
+      path: '/settings'
+      fullPath: '/founder/settings'
+      preLoaderRoute: typeof AuthenticatedFounderSettingsRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
     '/_authenticated/founder/profile': {
       id: '/_authenticated/founder/profile'
       path: '/profile'
@@ -515,6 +535,7 @@ interface AuthenticatedFounderRouteChildren {
   AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
   AuthenticatedFounderPreviewRoute: typeof AuthenticatedFounderPreviewRoute
   AuthenticatedFounderProfileRoute: typeof AuthenticatedFounderProfileRoute
+  AuthenticatedFounderSettingsRoute: typeof AuthenticatedFounderSettingsRoute
   AuthenticatedFounderIndexRoute: typeof AuthenticatedFounderIndexRoute
 }
 
@@ -522,6 +543,7 @@ const AuthenticatedFounderRouteChildren: AuthenticatedFounderRouteChildren = {
   AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
   AuthenticatedFounderPreviewRoute: AuthenticatedFounderPreviewRoute,
   AuthenticatedFounderProfileRoute: AuthenticatedFounderProfileRoute,
+  AuthenticatedFounderSettingsRoute: AuthenticatedFounderSettingsRoute,
   AuthenticatedFounderIndexRoute: AuthenticatedFounderIndexRoute,
 }
 
