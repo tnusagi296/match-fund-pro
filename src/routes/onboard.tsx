@@ -295,7 +295,7 @@ function OnboardPage() {
               onClick={finish}
               className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2 text-sm font-medium text-primary-foreground shadow-[0_0_28px_var(--mint-soft)]"
             >
-              <Sparkles className="h-3.5 w-3.5" /> Start swiping
+              <Sparkles className="h-3.5 w-3.5" /> Save investment thesis
             </button>
           )}
         </div>
