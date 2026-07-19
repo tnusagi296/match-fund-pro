@@ -34,13 +34,13 @@ function DemoSwitcher() {
           </div>
         </Link>
         <Link
-          to="/founder/profile"
+          to="/demo/founder/profile"
           className="rounded-2xl glass p-5 transition hover:bg-white/[0.06]"
         >
           <User className="h-5 w-5 text-mint" />
           <div className="mt-3 text-sm font-medium">Founder view</div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Profile, Grants, Preview, Settings.
+            Profile, Preview, Claim flow.
           </div>
         </Link>
         <Link
