@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { crawlFounderGraph, publishFounderProfile } from "@/lib/crawl.functions";
+import { runFounderCrawl, CrawlError } from "@/services/crawlService";
 import { useDraft, deleteServerDraft } from "@/lib/drafts";
 import { validateIdentityLinks, type GithubResult } from "@/lib/identity";
 
@@ -53,7 +54,8 @@ type CrawlState =
       profileId: string;
       alreadyPublished: boolean;
     }
-  | { kind: "error" };
+  | { kind: "timeout"; requestId: string }
+  | { kind: "error"; requestId?: string; reason: "network" | "server" | "invalid_response" };
 
 function FounderProfileEditor() {
   const draft = useDraft<FounderDraft>("founder_profile", INITIAL);
@@ -98,8 +100,8 @@ function FounderProfileEditor() {
         setStep(1);
         return;
       }
-      const result = await crawlFn({
-        data: {
+      const result = await runFounderCrawl(
+        {
           name: draft.payload.name || links.normalized.github.handle,
           headline: draft.payload.headline,
           github: links.normalized.github.handle,
@@ -107,20 +109,31 @@ function FounderProfileEditor() {
           site: links.normalized.site,
           deckText: draft.payload.deckText,
         },
-      });
+        { invoke: (args) => crawlFn(args as { data: unknown }) },
+      );
       setCrawl({
         kind: "success",
         github: links.normalized.github,
-        signalCount: result.signals.length,
+        signalCount: result.signalCount,
         profileId: result.profileId,
         alreadyPublished: result.alreadyPublished,
       });
     } catch (error) {
-      // Never expose stack traces / worker URLs / raw runtime messages.
-      // Log for observability, show a stable user-facing copy.
+      if (error instanceof CrawlError) {
+        if (error.failure.kind === "timeout") {
+          setCrawl({ kind: "timeout", requestId: error.failure.requestId });
+        } else {
+          setCrawl({
+            kind: "error",
+            requestId: error.failure.requestId,
+            reason: error.failure.kind,
+          });
+        }
+        return;
+      }
       // eslint-disable-next-line no-console
       console.warn("[founder-profile] signal crawl failed", error);
-      setCrawl({ kind: "error" });
+      setCrawl({ kind: "error", reason: "server" });
     }
   }
 
@@ -438,6 +451,29 @@ function SignalsStep({
         </div>
       )}
 
+      {state.kind === "timeout" && (
+        <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
+          <div className="flex items-center gap-2 text-amber-300">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">Analysis took too long to respond.</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Public sources can be slow. Try again — usually the second attempt completes.
+          </p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+            ref {state.requestId}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button className="btn-ghost" onClick={onRun}>
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Try again
+            </button>
+            <button className="btn-primary" onClick={onContinue}>
+              Continue with profile setup
+            </button>
+          </div>
+        </div>
+      )}
+
       {state.kind === "error" && (
         <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
           <div className="flex items-center gap-2 text-amber-300">
@@ -447,8 +483,17 @@ function SignalsStep({
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            You can retry, or continue setting up your profile and add public signals later.
+            {state.reason === "network"
+              ? "Looks like a connection hiccup. Check your network and retry."
+              : state.reason === "invalid_response"
+                ? "The analysis returned an unexpected shape. Retry, or continue and finish later."
+                : "You can retry, or continue setting up your profile and add public signals later."}
           </p>
+          {state.requestId && (
+            <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+              ref {state.requestId}
+            </p>
+          )}
           <div className="mt-3 flex gap-2">
             <button className="btn-ghost" onClick={onRun}>
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Try again
@@ -496,7 +541,7 @@ function ReviewStep({
           value={
             crawl.kind === "success"
               ? `${crawl.signalCount} attached`
-              : crawl.kind === "error"
+              : crawl.kind === "error" || crawl.kind === "timeout"
                 ? "Not analyzed"
                 : "Not yet run"
           }
