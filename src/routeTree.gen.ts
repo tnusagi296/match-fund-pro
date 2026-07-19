@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
 import { Route as CompanyIdRouteImport } from './routes/company.$id'
+import { Route as AuthenticatedInvestorRouteImport } from './routes/_authenticated.investor'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
@@ -71,6 +72,11 @@ const CompanyIdRoute = CompanyIdRouteImport.update({
   path: '/company/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedInvestorRoute = AuthenticatedInvestorRouteImport.update({
+  id: '/investor',
+  path: '/investor',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -85,15 +91,15 @@ const Char91DotmcpChar93ListToolsRoute =
   } as any)
 const AuthenticatedInvestorSettingsRoute =
   AuthenticatedInvestorSettingsRouteImport.update({
-    id: '/investor/settings',
-    path: '/investor/settings',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedInvestorRoute,
   } as any)
 const AuthenticatedInvestorDiscoverRoute =
   AuthenticatedInvestorDiscoverRouteImport.update({
-    id: '/investor/discover',
-    path: '/investor/discover',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/discover',
+    path: '/discover',
+    getParentRoute: () => AuthenticatedInvestorRoute,
   } as any)
 const AuthenticatedFounderGrantsRoute =
   AuthenticatedFounderGrantsRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/investor': typeof AuthenticatedInvestorRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/investor': typeof AuthenticatedInvestorRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/investor': typeof AuthenticatedInvestorRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/investor'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/investor'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/investor'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -318,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/investor': {
+      id: '/_authenticated/investor'
+      path: '/investor'
+      fullPath: '/investor'
+      preLoaderRoute: typeof AuthenticatedInvestorRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -334,17 +353,17 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/investor/settings': {
       id: '/_authenticated/investor/settings'
-      path: '/investor/settings'
+      path: '/settings'
       fullPath: '/investor/settings'
       preLoaderRoute: typeof AuthenticatedInvestorSettingsRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedInvestorRoute
     }
     '/_authenticated/investor/discover': {
       id: '/_authenticated/investor/discover'
-      path: '/investor/discover'
+      path: '/discover'
       fullPath: '/investor/discover'
       preLoaderRoute: typeof AuthenticatedInvestorDiscoverRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedInvestorRoute
     }
     '/_authenticated/founder/grants': {
       id: '/_authenticated/founder/grants'
@@ -377,18 +396,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedRouteChildren {
-  AuthenticatedAdminDiscoverRoute: typeof AuthenticatedAdminDiscoverRoute
-  AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
+interface AuthenticatedInvestorRouteChildren {
   AuthenticatedInvestorDiscoverRoute: typeof AuthenticatedInvestorDiscoverRoute
   AuthenticatedInvestorSettingsRoute: typeof AuthenticatedInvestorSettingsRoute
 }
 
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminDiscoverRoute: AuthenticatedAdminDiscoverRoute,
-  AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
+const AuthenticatedInvestorRouteChildren: AuthenticatedInvestorRouteChildren = {
   AuthenticatedInvestorDiscoverRoute: AuthenticatedInvestorDiscoverRoute,
   AuthenticatedInvestorSettingsRoute: AuthenticatedInvestorSettingsRoute,
+}
+
+const AuthenticatedInvestorRouteWithChildren =
+  AuthenticatedInvestorRoute._addFileChildren(
+    AuthenticatedInvestorRouteChildren,
+  )
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedInvestorRoute: typeof AuthenticatedInvestorRouteWithChildren
+  AuthenticatedAdminDiscoverRoute: typeof AuthenticatedAdminDiscoverRoute
+  AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedInvestorRoute: AuthenticatedInvestorRouteWithChildren,
+  AuthenticatedAdminDiscoverRoute: AuthenticatedAdminDiscoverRoute,
+  AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
