@@ -106,7 +106,7 @@ function WatchlistPage() {
               {sectorMismatch ? (
                 <>
                   You save <b>{patterns.topSector}</b> but it's not in your thesis.{" "}
-                  <Link to="/onboard" className="text-mint">Update →</Link>
+                  <Link to="/onboard" search={{ return: "settings" as const }} className="text-mint">Update →</Link>
                 </>
               ) : (
                 <>Your saves align with your thesis.</>
