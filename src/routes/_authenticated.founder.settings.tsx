@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/matchfund/AppShell";
 import { createFileRoute } from "@tanstack/react-router";
 import { Settings as SettingsIcon } from "lucide-react";
 
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/founder/settings")({
 
 function FounderSettingsPlaceholder() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <AppShell><div className="mx-auto max-w-3xl">
       <div className="mb-8">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
           Founder
@@ -27,6 +28,6 @@ function FounderSettingsPlaceholder() {
           with the founder editor.
         </p>
       </div>
-    </div>
+    </div></AppShell>
   );
 }

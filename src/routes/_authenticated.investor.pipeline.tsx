@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/matchfund/AppShell";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bookmark } from "lucide-react";
 
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/investor/pipeline")({
 
 function PipelinePlaceholder() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <AppShell><div className="mx-auto max-w-3xl">
       <div className="mb-8">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
           Pipeline
@@ -30,6 +31,6 @@ function PipelinePlaceholder() {
           and remain visible on Discover.
         </p>
       </div>
-    </div>
+    </div></AppShell>
   );
 }

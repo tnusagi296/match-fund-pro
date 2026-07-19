@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/matchfund/AppShell";
 import { createFileRoute } from "@tanstack/react-router";
 import { User } from "lucide-react";
 
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/founder/profile")({
 
 function FounderProfilePlaceholder() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <AppShell><div className="mx-auto max-w-3xl">
       <div className="mb-8">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
           Founder
@@ -28,6 +29,6 @@ function FounderProfilePlaceholder() {
           the roadmap.
         </p>
       </div>
-    </div>
+    </div></AppShell>
   );
 }
