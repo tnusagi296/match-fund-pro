@@ -8,6 +8,7 @@ const NAV_INVESTOR = [
   { to: "/", label: "Discover" },
   { to: "/watchlist", label: "Shortlist" },
   { to: "/onboard", label: "Thesis" },
+  { to: "/admin/discover", label: "Crawl" },
 ];
 const NAV_FOUNDER = [
   { to: "/me", label: "My profile" },
