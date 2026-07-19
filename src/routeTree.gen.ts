@@ -38,6 +38,7 @@ import { Route as AuthenticatedFounderSettingsRouteImport } from './routes/_auth
 import { Route as AuthenticatedFounderProfileRouteImport } from './routes/_authenticated.founder.profile'
 import { Route as AuthenticatedFounderPreviewRouteImport } from './routes/_authenticated.founder.preview'
 import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
+import { Route as AuthenticatedFounderClaimRouteImport } from './routes/_authenticated.founder.claim'
 import { Route as AuthenticatedAdminDiscoverRouteImport } from './routes/_authenticated.admin.discover'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -197,6 +198,12 @@ const AuthenticatedFounderGrantsRoute =
     path: '/grants',
     getParentRoute: () => AuthenticatedFounderRoute,
   } as any)
+const AuthenticatedFounderClaimRoute =
+  AuthenticatedFounderClaimRouteImport.update({
+    id: '/claim',
+    path: '/claim',
+    getParentRoute: () => AuthenticatedFounderRoute,
+  } as any)
 const AuthenticatedAdminDiscoverRoute =
   AuthenticatedAdminDiscoverRouteImport.update({
     id: '/discover',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/founder/claim': typeof AuthenticatedFounderClaimRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/founder/profile': typeof AuthenticatedFounderProfileRoute
@@ -267,6 +275,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/founder/claim': typeof AuthenticatedFounderClaimRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/founder/profile': typeof AuthenticatedFounderProfileRoute
@@ -302,6 +311,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/discover': typeof AuthenticatedAdminDiscoverRoute
+  '/_authenticated/founder/claim': typeof AuthenticatedFounderClaimRoute
   '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/_authenticated/founder/preview': typeof AuthenticatedFounderPreviewRoute
   '/_authenticated/founder/profile': typeof AuthenticatedFounderProfileRoute
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/discover'
+    | '/founder/claim'
     | '/founder/grants'
     | '/founder/preview'
     | '/founder/profile'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/discover'
+    | '/founder/claim'
     | '/founder/grants'
     | '/founder/preview'
     | '/founder/profile'
@@ -401,6 +413,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/discover'
+    | '/_authenticated/founder/claim'
     | '/_authenticated/founder/grants'
     | '/_authenticated/founder/preview'
     | '/_authenticated/founder/profile'
@@ -639,6 +652,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFounderGrantsRouteImport
       parentRoute: typeof AuthenticatedFounderRoute
     }
+    '/_authenticated/founder/claim': {
+      id: '/_authenticated/founder/claim'
+      path: '/claim'
+      fullPath: '/founder/claim'
+      preLoaderRoute: typeof AuthenticatedFounderClaimRouteImport
+      parentRoute: typeof AuthenticatedFounderRoute
+    }
     '/_authenticated/admin/discover': {
       id: '/_authenticated/admin/discover'
       path: '/discover'
@@ -677,6 +697,7 @@ const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedFounderRouteChildren {
+  AuthenticatedFounderClaimRoute: typeof AuthenticatedFounderClaimRoute
   AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
   AuthenticatedFounderPreviewRoute: typeof AuthenticatedFounderPreviewRoute
   AuthenticatedFounderProfileRoute: typeof AuthenticatedFounderProfileRoute
@@ -685,6 +706,7 @@ interface AuthenticatedFounderRouteChildren {
 }
 
 const AuthenticatedFounderRouteChildren: AuthenticatedFounderRouteChildren = {
+  AuthenticatedFounderClaimRoute: AuthenticatedFounderClaimRoute,
   AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
   AuthenticatedFounderPreviewRoute: AuthenticatedFounderPreviewRoute,
   AuthenticatedFounderProfileRoute: AuthenticatedFounderProfileRoute,
