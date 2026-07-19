@@ -662,10 +662,10 @@ function TodayDeck() {
         </aside>
       </div>
 
-      {toast && (
+      {thesisToast && (
         <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-full border border-mint/30 bg-background/90 px-5 py-2.5 text-sm shadow-lg backdrop-blur">
           <Sparkles className="mr-2 inline h-3.5 w-3.5 text-mint" />
-          {toast}
+          {thesisToast}
         </div>
       )}
     </AppShell>
