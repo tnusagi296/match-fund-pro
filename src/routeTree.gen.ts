@@ -23,6 +23,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedInvestorIndexRouteImport } from './routes/_authenticated.investor.index'
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
+import { Route as AuthenticatedInvestorPipelineRouteImport } from './routes/_authenticated.investor.pipeline'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
 import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
 import { Route as AuthenticatedAdminDiscoverRouteImport } from './routes/_authenticated.admin.discover'
@@ -102,6 +103,12 @@ const AuthenticatedInvestorSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedInvestorRoute,
   } as any)
+const AuthenticatedInvestorPipelineRoute =
+  AuthenticatedInvestorPipelineRouteImport.update({
+    id: '/pipeline',
+    path: '/pipeline',
+    getParentRoute: () => AuthenticatedInvestorRoute,
+  } as any)
 const AuthenticatedInvestorDiscoverRoute =
   AuthenticatedInvestorDiscoverRouteImport.update({
     id: '/discover',
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
+  '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
   '/investor/': typeof AuthenticatedInvestorIndexRoute
 }
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/admin/discover': typeof AuthenticatedAdminDiscoverRoute
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
+  '/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
   '/investor': typeof AuthenticatedInvestorIndexRoute
 }
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/discover': typeof AuthenticatedAdminDiscoverRoute
   '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
+  '/_authenticated/investor/pipeline': typeof AuthenticatedInvestorPipelineRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
   '/_authenticated/investor/': typeof AuthenticatedInvestorIndexRoute
 }
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/admin/discover'
     | '/founder/grants'
     | '/investor/discover'
+    | '/investor/pipeline'
     | '/investor/settings'
     | '/investor/'
   fileRoutesByTo: FileRoutesByTo
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/admin/discover'
     | '/founder/grants'
     | '/investor/discover'
+    | '/investor/pipeline'
     | '/investor/settings'
     | '/investor'
   id:
@@ -256,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/discover'
     | '/_authenticated/founder/grants'
     | '/_authenticated/investor/discover'
+    | '/_authenticated/investor/pipeline'
     | '/_authenticated/investor/settings'
     | '/_authenticated/investor/'
   fileRoutesById: FileRoutesById
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvestorSettingsRouteImport
       parentRoute: typeof AuthenticatedInvestorRoute
     }
+    '/_authenticated/investor/pipeline': {
+      id: '/_authenticated/investor/pipeline'
+      path: '/pipeline'
+      fullPath: '/investor/pipeline'
+      preLoaderRoute: typeof AuthenticatedInvestorPipelineRouteImport
+      parentRoute: typeof AuthenticatedInvestorRoute
+    }
     '/_authenticated/investor/discover': {
       id: '/_authenticated/investor/discover'
       path: '/discover'
@@ -416,12 +436,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedInvestorRouteChildren {
   AuthenticatedInvestorDiscoverRoute: typeof AuthenticatedInvestorDiscoverRoute
+  AuthenticatedInvestorPipelineRoute: typeof AuthenticatedInvestorPipelineRoute
   AuthenticatedInvestorSettingsRoute: typeof AuthenticatedInvestorSettingsRoute
   AuthenticatedInvestorIndexRoute: typeof AuthenticatedInvestorIndexRoute
 }
 
 const AuthenticatedInvestorRouteChildren: AuthenticatedInvestorRouteChildren = {
   AuthenticatedInvestorDiscoverRoute: AuthenticatedInvestorDiscoverRoute,
+  AuthenticatedInvestorPipelineRoute: AuthenticatedInvestorPipelineRoute,
   AuthenticatedInvestorSettingsRoute: AuthenticatedInvestorSettingsRoute,
   AuthenticatedInvestorIndexRoute: AuthenticatedInvestorIndexRoute,
 }
