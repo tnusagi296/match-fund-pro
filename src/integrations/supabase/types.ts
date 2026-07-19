@@ -14,8 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      discovery_candidates: {
+        Row: {
+          created_at: string
+          discovery_reasons_json: Json
+          discovery_run_id: string
+          error_summary: string | null
+          founder_graph_entity_id: string | null
+          founder_profile_id: string | null
+          id: string
+          source: string
+          source_identifier: string
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discovery_reasons_json?: Json
+          discovery_run_id: string
+          error_summary?: string | null
+          founder_graph_entity_id?: string | null
+          founder_profile_id?: string | null
+          id?: string
+          source: string
+          source_identifier: string
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discovery_reasons_json?: Json
+          discovery_run_id?: string
+          error_summary?: string | null
+          founder_graph_entity_id?: string | null
+          founder_profile_id?: string | null
+          id?: string
+          source?: string
+          source_identifier?: string
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_candidates_discovery_run_id_fkey"
+            columns: ["discovery_run_id"]
+            isOneToOne: false
+            referencedRelation: "discovery_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_candidates_founder_graph_entity_id_fkey"
+            columns: ["founder_graph_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_candidates_founder_profile_id_fkey"
+            columns: ["founder_profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discovery_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_summary: string | null
+          id: string
+          plan_json: Json
+          queries_json: Json
+          source: string
+          source_results_json: Json
+          started_at: string
+          stats_json: Json
+          status: string
+          thesis_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_summary?: string | null
+          id?: string
+          plan_json?: Json
+          queries_json?: Json
+          source: string
+          source_results_json?: Json
+          started_at?: string
+          stats_json?: Json
+          status: string
+          thesis_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_summary?: string | null
+          id?: string
+          plan_json?: Json
+          queries_json?: Json
+          source?: string
+          source_results_json?: Json
+          started_at?: string
+          stats_json?: Json
+          status?: string
+          thesis_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_profiles: {
         Row: {
+          biography: string | null
+          claim_status: Database["public"]["Enums"]["profile_claim_status"]
+          company_name: string | null
           created_at: string
           deck_url: string | null
           github: string | null
@@ -23,14 +141,22 @@ export type Database = {
           headline: string
           id: string
           linkedin: string | null
+          location: string | null
           name: string
+          owner_user_id: string | null
+          profile_origin: Database["public"]["Enums"]["profile_source_origin"]
           published: boolean
           scores: Json
           site: string | null
           summary: string | null
           updated_at: string
+          verification_status: Database["public"]["Enums"]["profile_verification_status"]
+          visibility_state: Database["public"]["Enums"]["profile_visibility_state"]
         }
         Insert: {
+          biography?: string | null
+          claim_status?: Database["public"]["Enums"]["profile_claim_status"]
+          company_name?: string | null
           created_at?: string
           deck_url?: string | null
           github?: string | null
@@ -38,14 +164,22 @@ export type Database = {
           headline?: string
           id?: string
           linkedin?: string | null
+          location?: string | null
           name?: string
+          owner_user_id?: string | null
+          profile_origin?: Database["public"]["Enums"]["profile_source_origin"]
           published?: boolean
           scores?: Json
           site?: string | null
           summary?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["profile_verification_status"]
+          visibility_state?: Database["public"]["Enums"]["profile_visibility_state"]
         }
         Update: {
+          biography?: string | null
+          claim_status?: Database["public"]["Enums"]["profile_claim_status"]
+          company_name?: string | null
           created_at?: string
           deck_url?: string | null
           github?: string | null
@@ -53,12 +187,17 @@ export type Database = {
           headline?: string
           id?: string
           linkedin?: string | null
+          location?: string | null
           name?: string
+          owner_user_id?: string | null
+          profile_origin?: Database["public"]["Enums"]["profile_source_origin"]
           published?: boolean
           scores?: Json
           site?: string | null
           summary?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["profile_verification_status"]
+          visibility_state?: Database["public"]["Enums"]["profile_visibility_state"]
         }
         Relationships: [
           {
@@ -247,6 +386,54 @@ export type Database = {
           },
         ]
       }
+      graph_entity_resolution_candidates: {
+        Row: {
+          created_at: string
+          id: string
+          identifiers_json: Json
+          left_entity_id: string
+          reason: string
+          right_entity_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifiers_json?: Json
+          left_entity_id: string
+          reason: string
+          right_entity_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifiers_json?: Json
+          left_entity_id?: string
+          reason?: string
+          right_entity_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_entity_resolution_candidates_left_entity_id_fkey"
+            columns: ["left_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_entity_resolution_candidates_right_entity_id_fkey"
+            columns: ["right_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       graph_evidence: {
         Row: {
           content_hash: string
@@ -379,6 +566,166 @@ export type Database = {
           },
         ]
       }
+      investor_founder_actions: {
+        Row: {
+          created_at: string
+          founder_profile_id: string
+          id: string
+          investor_user_id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["investor_action_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          founder_profile_id: string
+          id?: string
+          investor_user_id: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["investor_action_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          founder_profile_id?: string
+          id?: string
+          investor_user_id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["investor_action_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_founder_actions_founder_profile_id_fkey"
+            columns: ["founder_profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_theses: {
+        Row: {
+          check_max: number | null
+          check_min: number | null
+          created_at: string
+          geographies: string[]
+          id: string
+          investor_user_id: string
+          sectors: string[]
+          signals: string[]
+          stages: string[]
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          check_max?: number | null
+          check_min?: number | null
+          created_at?: string
+          geographies?: string[]
+          id?: string
+          investor_user_id: string
+          sectors?: string[]
+          signals?: string[]
+          stages?: string[]
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          check_max?: number | null
+          check_min?: number | null
+          created_at?: string
+          geographies?: string[]
+          id?: string
+          investor_user_id?: string
+          sectors?: string[]
+          signals?: string[]
+          stages?: string[]
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
+      profile_claims: {
+        Row: {
+          created_at: string
+          evidence: Json
+          founder_profile_id: string
+          id: string
+          requesting_user_id: string
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["claim_request_status"]
+          submitted_at: string
+          updated_at: string
+          verification_method: Database["public"]["Enums"]["claim_verification_method"]
+        }
+        Insert: {
+          created_at?: string
+          evidence?: Json
+          founder_profile_id: string
+          id?: string
+          requesting_user_id: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["claim_request_status"]
+          submitted_at?: string
+          updated_at?: string
+          verification_method?: Database["public"]["Enums"]["claim_verification_method"]
+        }
+        Update: {
+          created_at?: string
+          evidence?: Json
+          founder_profile_id?: string
+          id?: string
+          requesting_user_id?: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["claim_request_status"]
+          submitted_at?: string
+          updated_at?: string
+          verification_method?: Database["public"]["Enums"]["claim_verification_method"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_claims_founder_profile_id_fkey"
+            columns: ["founder_profile_id"]
+            isOneToOne: false
+            referencedRelation: "founder_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          account_role: Database["public"]["Enums"]["account_role"]
+          created_at: string
+          email: string | null
+          full_name: string | null
+          fund_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_role?: Database["public"]["Enums"]["account_role"]
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          fund_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_role?: Database["public"]["Enums"]["account_role"]
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          fund_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -390,7 +737,24 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      account_role: "investor" | "founder" | "admin"
+      claim_request_status: "pending" | "approved" | "rejected"
+      claim_verification_method: "email" | "github" | "website" | "manual"
+      investor_action_status: "monitoring" | "shortlisted" | "passed"
+      profile_claim_status:
+        | "unclaimed"
+        | "pending"
+        | "claimed"
+        | "rejected"
+        | "self_submitted"
+      profile_source_origin:
+        | "crawler"
+        | "self_created"
+        | "public_scan"
+        | "founder_submission"
+        | "demo"
+      profile_verification_status: "unverified" | "pending" | "verified"
+      profile_visibility_state: "private" | "discoverable" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -517,6 +881,27 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_role: ["investor", "founder", "admin"],
+      claim_request_status: ["pending", "approved", "rejected"],
+      claim_verification_method: ["email", "github", "website", "manual"],
+      investor_action_status: ["monitoring", "shortlisted", "passed"],
+      profile_claim_status: [
+        "unclaimed",
+        "pending",
+        "claimed",
+        "rejected",
+        "self_submitted",
+      ],
+      profile_source_origin: [
+        "crawler",
+        "self_created",
+        "public_scan",
+        "founder_submission",
+        "demo",
+      ],
+      profile_verification_status: ["unverified", "pending", "verified"],
+      profile_visibility_state: ["private", "discoverable", "published"],
+    },
   },
 } as const
