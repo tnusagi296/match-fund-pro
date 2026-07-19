@@ -92,8 +92,8 @@ function TodayDeck() {
       // Even on error, if user opted into demo, show demo results.
       return [];
     }
-    const graphRanked = rankGraphFounders(graphFounders, thesis);
-    const demoRanked = rankFounders(founders, thesis).map(({ founder, match }) => ({
+    const graphRanked = rankGraphFounders(graphFounders, effectiveThesis);
+    const demoRanked = rankFounders(founders, effectiveThesis).map(({ founder, match }) => ({
       kind: "demo" as const,
       founder,
       match,
@@ -103,7 +103,7 @@ function TodayDeck() {
     return selection.mode === "graph"
       ? selection.records.map((r) => ({ kind: "graph" as const, ...r }))
       : selection.records;
-  }, [graphError, graphFounders, thesis]);
+  }, [graphError, graphFounders, thesis, demoMode]);
 
   // Data mode: live if there are any graph records, demo if only demo,
   // mixed if the feed contains both kinds.
