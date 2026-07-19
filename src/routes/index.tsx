@@ -182,21 +182,82 @@ function TodayDeck() {
     };
   }, [decisions]);
 
-  if (!hydrated || !thesis) {
+  // 1) Still hydrating localStorage — skeleton, not a blocker.
+  if (!hydrated) {
     return (
       <AppShell>
-        <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
-          Loading your thesis…
+        <DiscoverSkeleton message="Loading your workspace…" />
+      </AppShell>
+    );
+  }
+
+  // 2) No thesis yet, and user hasn't opted into demo — friendly onboarding CTA.
+  if (!thesis && !demoMode) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-2xl py-16 text-center">
+          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
+            Discover
+          </div>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">
+            Discover exceptional founders before they start fundraising.
+          </h1>
+          <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground">
+            MatchFund turns public builder signals into thesis-matched founder opportunities for
+            early-stage investors.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/onboard"
+              className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Set up investment thesis
+            </Link>
+            <button
+              onClick={() => setDemoMode(true)}
+              className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Explore demo matches
+            </button>
+          </div>
         </div>
       </AppShell>
     );
   }
 
+  // 3) Fetching graph feed — skeleton.
   if (graphLoading) {
     return (
       <AppShell>
-        <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
-          Loading published founder evidence…
+        <DiscoverSkeleton message="Finding builders that match your investment thesis…" />
+      </AppShell>
+    );
+  }
+
+  // 4) Error — with retry + demo fallback.
+  if (graphError && !demoMode) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-lg py-16 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-rose-400" />
+          <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight">
+            We couldn't load your founder matches.
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">{graphError}</p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => setDemoMode(true)}
+              className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Explore demo matches
+            </button>
+          </div>
         </div>
       </AppShell>
     );
