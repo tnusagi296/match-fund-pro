@@ -3,7 +3,7 @@ import { Pencil, ShieldCheck, User, Target } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { useThesis, STAGE_OPTIONS } from "@/lib/thesis";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_authenticated/investor/settings")({
   head: () => ({ meta: [{ title: "Settings — MatchFund" }] }),
   component: SettingsPage,
 });

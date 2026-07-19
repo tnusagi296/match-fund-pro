@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, Search, ExternalLink, AlertTriangle, Github } from "lucide-react";
 import { discoverGitHubCandidates } from "@/lib/discovery.functions";
 
-export const Route = createFileRoute("/admin/discover")({
+export const Route = createFileRoute("/_authenticated/admin/discover")({
   head: () => ({ meta: [{ title: "GitHub discovery — Match Fund" }] }),
   component: DiscoverAdminPage,
 });

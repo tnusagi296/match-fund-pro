@@ -4,7 +4,7 @@ import { Calendar, Copy, MapPin, Send, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { grants, type Grant } from "@/data/matchfund";
 
-export const Route = createFileRoute("/grants")({
+export const Route = createFileRoute("/_authenticated/founder/grants")({
   head: () => ({ meta: [{ title: "Grants & programs — Match Fund" }] }),
   component: GrantsPage,
 });

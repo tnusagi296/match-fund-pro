@@ -30,7 +30,7 @@ import type {
 } from "@/lib/graph/types";
 import { rankFounders, useThesis, saveThesis, type MatchScore } from "@/lib/thesis";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/investor/discover")({
   head: () => ({ meta: [{ title: "Discover — MatchFund" }] }),
   component: TodayDeck,
 });
