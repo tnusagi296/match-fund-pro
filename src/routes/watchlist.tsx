@@ -31,6 +31,7 @@ function WatchlistPage() {
     const next = ids.filter((x) => x !== id);
     setIds(next);
     localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next));
+    toast.success("Removed from shortlist.");
   };
 
   const items: Founder[] = ids
