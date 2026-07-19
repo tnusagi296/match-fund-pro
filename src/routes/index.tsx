@@ -39,7 +39,6 @@ const WATCHLIST_KEY = "matchfund:watchlist";
 const DECISIONS_KEY = "mf.decisions";
 
 function TodayDeck() {
-  const navigate = useNavigate();
   const [thesis, setThesis, hydrated] = useThesis();
   const graphFeedFn = useServerFn(getPublishedGraphFounders);
   const [graphFounders, setGraphFounders] = useState<GraphFounderCardData[]>([]);
