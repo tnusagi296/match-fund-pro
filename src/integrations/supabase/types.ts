@@ -646,6 +646,36 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_drafts: {
+        Row: {
+          created_at: string
+          current_step: number
+          id: string
+          kind: Database["public"]["Enums"]["draft_kind"]
+          payload: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number
+          id?: string
+          kind: Database["public"]["Enums"]["draft_kind"]
+          payload?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: number
+          id?: string
+          kind?: Database["public"]["Enums"]["draft_kind"]
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_claims: {
         Row: {
           created_at: string
@@ -740,6 +770,7 @@ export type Database = {
       account_role: "investor" | "founder" | "admin"
       claim_request_status: "pending" | "approved" | "rejected"
       claim_verification_method: "email" | "github" | "website" | "manual"
+      draft_kind: "investor_thesis" | "founder_profile"
       investor_action_status: "monitoring" | "shortlisted" | "passed"
       profile_claim_status:
         | "unclaimed"
@@ -885,6 +916,7 @@ export const Constants = {
       account_role: ["investor", "founder", "admin"],
       claim_request_status: ["pending", "approved", "rejected"],
       claim_verification_method: ["email", "github", "website", "manual"],
+      draft_kind: ["investor_thesis", "founder_profile"],
       investor_action_status: ["monitoring", "shortlisted", "passed"],
       profile_claim_status: [
         "unclaimed",

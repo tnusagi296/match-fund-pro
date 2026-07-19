@@ -162,7 +162,10 @@ export class GitHubGraphAdapter {
   private readonly now: () => Date;
 
   constructor(options: GitHubGraphAdapterOptions = {}) {
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    // Bind to globalThis: assigning global `fetch` to an instance property and
+    // later calling it as `this.fetchImpl(...)` throws "Illegal invocation" in
+    // some runtimes because `fetch` loses its receiver.
+    this.fetchImpl = options.fetchImpl ?? fetch.bind(globalThis);
     this.token = options.token;
     this.now = options.now ?? (() => new Date());
   }

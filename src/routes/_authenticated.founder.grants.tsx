@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Calendar, Copy, MapPin, Send, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar, Copy, Info, MapPin, Send, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { grants, type Grant } from "@/data/matchfund";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/founder/grants")({
   head: () => ({ meta: [{ title: "Grants & programs — Match Fund" }] }),
@@ -14,6 +15,35 @@ const TYPES: Grant["type"][] = ["Accelerator", "Grant", "Angel", "Hackathon"];
 function GrantsPage() {
   const [type, setType] = useState<Grant["type"] | "All">("All");
   const [selected, setSelected] = useState<Grant | null>(null);
+  // A "personalized" grant match requires a published founder profile with
+  // real signals. Otherwise we show the same list, but labelled as
+  // illustrative and without personalized FIT numbers.
+  const [profileState, setProfileState] = useState<"loading" | "personalized" | "illustrative">(
+    "loading",
+  );
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      if (!alive) return;
+      if (!userRes.user) {
+        setProfileState("illustrative");
+        return;
+      }
+      const { data } = await supabase
+        .from("founder_profiles")
+        .select("published")
+        .eq("owner_user_id", userRes.user.id)
+        .eq("published", true)
+        .maybeSingle();
+      if (!alive) return;
+      setProfileState(data?.published ? "personalized" : "illustrative");
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const filtered = useMemo(
     () => grants.filter((g) => type === "All" || g.type === type).sort((a, b) => b.matchScore - a.matchScore),
@@ -24,11 +54,26 @@ function GrantsPage() {
     <AppShell>
       <div className="mb-6">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Programs</div>
-        <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Grants, accelerators & angels</h1>
+        <div className="mt-1 flex flex-wrap items-baseline gap-3">
+          <h1 className="font-display text-4xl font-semibold tracking-tight">Grants, accelerators & angels</h1>
+          {profileState === "illustrative" && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-medium text-amber-300">
+              <Info className="h-3 w-3" /> Illustrative recommendations
+            </span>
+          )}
+          {profileState === "personalized" && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-mint/30 bg-mint-soft/60 px-2.5 py-1 text-[10px] font-medium text-mint">
+              <Sparkles className="h-3 w-3" /> Personalized to your profile
+            </span>
+          )}
+        </div>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Non-dilutive and pre-seed capital sources — ranked against your founder profile.
+          {profileState === "personalized"
+            ? "Non-dilutive and pre-seed capital sources — ranked against your founder profile."
+            : "Publish your founder profile to unlock personalized FIT scores. Below is an illustrative directory."}
         </p>
       </div>
+
 
       <div className="mb-6 flex items-center gap-2 rounded-full glass p-1 w-fit">
         {(["All", ...TYPES] as const).map((t) => (
@@ -64,8 +109,16 @@ function GrantsPage() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-semibold tabular text-mint">{g.matchScore}</div>
-                <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Fit</div>
+                {profileState === "personalized" ? (
+                  <>
+                    <div className="text-lg font-semibold tabular text-mint">{g.matchScore}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Fit</div>
+                  </>
+                ) : (
+                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Publish profile<br />for FIT
+                  </div>
+                )}
               </div>
             </div>
 
