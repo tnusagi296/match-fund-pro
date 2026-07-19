@@ -14,6 +14,7 @@ import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IdeaIdRouteImport } from './routes/idea.$id'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
 import { Route as CompanyIdRouteImport } from './routes/company.$id'
@@ -51,6 +52,10 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IdeaIdRoute = IdeaIdRouteImport.update({
   id: '/idea/$id',
   path: '/idea/$id',
@@ -80,27 +85,27 @@ const Char91DotmcpChar93ListToolsRoute =
   } as any)
 const AuthenticatedInvestorSettingsRoute =
   AuthenticatedInvestorSettingsRouteImport.update({
-    id: '/_authenticated/investor/settings',
+    id: '/investor/settings',
     path: '/investor/settings',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedInvestorDiscoverRoute =
   AuthenticatedInvestorDiscoverRouteImport.update({
-    id: '/_authenticated/investor/discover',
+    id: '/investor/discover',
     path: '/investor/discover',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedFounderGrantsRoute =
   AuthenticatedFounderGrantsRouteImport.update({
-    id: '/_authenticated/founder/grants',
+    id: '/founder/grants',
     path: '/founder/grants',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminDiscoverRoute =
   AuthenticatedAdminDiscoverRouteImport.update({
-    id: '/_authenticated/admin/discover',
+    id: '/admin/discover',
     path: '/admin/discover',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
@@ -115,6 +120,7 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/me': typeof MeRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/auth'
     | '/mcp'
     | '/me'
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/investor/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/mcp'
     | '/me'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/investor/settings'
   id:
     | '__root__'
+    | '/_authenticated'
     | '/auth'
     | '/mcp'
     | '/me'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
   MeRoute: typeof MeRoute
@@ -239,10 +251,6 @@ export interface RootRouteChildren {
   IdeaIdRoute: typeof IdeaIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
-  AuthenticatedAdminDiscoverRoute: typeof AuthenticatedAdminDiscoverRoute
-  AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
-  AuthenticatedInvestorDiscoverRoute: typeof AuthenticatedInvestorDiscoverRoute
-  AuthenticatedInvestorSettingsRoute: typeof AuthenticatedInvestorSettingsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -280,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/idea/$id': {
@@ -322,28 +337,28 @@ declare module '@tanstack/react-router' {
       path: '/investor/settings'
       fullPath: '/investor/settings'
       preLoaderRoute: typeof AuthenticatedInvestorSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/investor/discover': {
       id: '/_authenticated/investor/discover'
       path: '/investor/discover'
       fullPath: '/investor/discover'
       preLoaderRoute: typeof AuthenticatedInvestorDiscoverRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/founder/grants': {
       id: '/_authenticated/founder/grants'
       path: '/founder/grants'
       fullPath: '/founder/grants'
       preLoaderRoute: typeof AuthenticatedFounderGrantsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/discover': {
       id: '/_authenticated/admin/discover'
       path: '/admin/discover'
       fullPath: '/admin/discover'
       preLoaderRoute: typeof AuthenticatedAdminDiscoverRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
@@ -362,7 +377,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedAdminDiscoverRoute: typeof AuthenticatedAdminDiscoverRoute
+  AuthenticatedFounderGrantsRoute: typeof AuthenticatedFounderGrantsRoute
+  AuthenticatedInvestorDiscoverRoute: typeof AuthenticatedInvestorDiscoverRoute
+  AuthenticatedInvestorSettingsRoute: typeof AuthenticatedInvestorSettingsRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminDiscoverRoute: AuthenticatedAdminDiscoverRoute,
+  AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
+  AuthenticatedInvestorDiscoverRoute: AuthenticatedInvestorDiscoverRoute,
+  AuthenticatedInvestorSettingsRoute: AuthenticatedInvestorSettingsRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   McpRoute: McpRoute,
   MeRoute: MeRoute,
@@ -376,10 +410,6 @@ const rootRouteChildren: RootRouteChildren = {
   IdeaIdRoute: IdeaIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
-  AuthenticatedAdminDiscoverRoute: AuthenticatedAdminDiscoverRoute,
-  AuthenticatedFounderGrantsRoute: AuthenticatedFounderGrantsRoute,
-  AuthenticatedInvestorDiscoverRoute: AuthenticatedInvestorDiscoverRoute,
-  AuthenticatedInvestorSettingsRoute: AuthenticatedInvestorSettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
