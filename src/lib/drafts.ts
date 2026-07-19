@@ -145,7 +145,7 @@ export function useDraft<T extends Record<string, unknown>>(
         {
           user_id: data.user.id,
           kind,
-          payload: payload as unknown as Record<string, unknown>,
+          payload: payload as never,
           current_step: step,
           updated_at: new Date().toISOString(),
         },
