@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
   AlertCircle,
   ArrowRight,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { FounderCard } from "@/components/matchfund/FounderCard";
+import { ScoreHelpButton } from "@/components/matchfund/ScoreHelp";
 import { discoveredSources, founders, type Founder } from "@/data/matchfund";
 import { previewDiscoveryPlan, startFounderDiscovery } from "@/lib/discovery/discovery.functions";
 import type { DiscoveryPlan, DiscoveryRunSummary } from "@/lib/discovery/types";
@@ -29,6 +31,11 @@ import type {
   RankedGraphFounder,
 } from "@/lib/graph/types";
 import { rankFounders, useThesis, saveThesis, type MatchScore } from "@/lib/thesis";
+import {
+  pipelineService,
+  useInvestorKey,
+  type FounderSnapshot,
+} from "@/services/pipelineService";
 
 export const Route = createFileRoute("/_authenticated/investor/discover")({
   head: () => ({ meta: [{ title: "Discover — MatchFund" }] }),
@@ -46,6 +53,7 @@ const DECISIONS_KEY = "mf.decisions";
 
 function TodayDeck() {
   const [thesis, setThesis, hydrated] = useThesis();
+  const userKey = useInvestorKey();
   const graphFeedFn = useServerFn(getPublishedGraphFounders);
   const previewDiscoveryFn = useServerFn(previewDiscoveryPlan);
   const startDiscoveryFn = useServerFn(startFounderDiscovery);
@@ -164,22 +172,92 @@ function TodayDeck() {
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [drag, setDrag] = useState(0);
   const [exiting, setExiting] = useState<Decision | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [thesisToast, setThesisToast] = useState<string | null>(null);
   const startX = useRef<number | null>(null);
 
   useEffect(() => setIdx(0), [ranked.length]);
 
   const current = ranked[idx];
 
+  function snapshotOf(item: RankedDiscovery): FounderSnapshot {
+    if (item.kind === "graph") {
+      return {
+        id: item.founder.id,
+        name: item.founder.name,
+        headline: item.founder.headline || "Founder",
+        avatarUrl: item.founder.avatarUrl,
+        sector: item.founder.topics[0] ?? null,
+        location: item.founder.location,
+        stage: item.founder.stage,
+        thesisMatch: item.thesisFit.score,
+        founderFit: null,
+        evidenceConfidence: item.founder.evidenceConfidence,
+        verified: item.founder.claimStatus === "claimed",
+        dataMode: "live",
+        sourceCount: item.founder.sourceCount,
+        lastSignalAt: item.founder.recentActivityAt,
+        matchReason: item.thesisFit.matchedCriteria[0] ?? null,
+      };
+    }
+    return {
+      id: item.founder.id,
+      name: item.founder.name,
+      headline: item.founder.headline,
+      avatarUrl: item.founder.avatar ?? null,
+      sector: item.founder.sector,
+      location: item.founder.location,
+      stage: item.founder.stage,
+      thesisMatch: Math.round(item.match.total),
+      founderFit: item.founder.scores.fit,
+      evidenceConfidence: "Demo",
+      verified: item.founder.verified,
+      dataMode: "demo",
+      sourceCount: discoveredSources(item.founder).length,
+      lastSignalAt: null,
+      matchReason: item.match.reasons[0] ?? item.founder.matchReason,
+    };
+  }
+
   const record = (decision: Decision) => {
     if (!current) return;
     const founderId = current.founder.id;
+    const snapshot = snapshotOf(current);
     setDecisions((d) => ({ ...d, [founderId]: decision }));
     if (typeof window !== "undefined") {
       const prev = JSON.parse(window.localStorage.getItem(DECISIONS_KEY) || "{}");
       prev[founderId] = decision;
       window.localStorage.setItem(DECISIONS_KEY, JSON.stringify(prev));
-      if (decision === "shortlist" || decision === "monitor") {
+    }
+
+    if (decision === "pass") {
+      if (userKey) {
+        const removed = pipelineService.remove(userKey, founderId);
+        toast(`${snapshot.name} passed.`, {
+          action: removed
+            ? { label: "Undo", onClick: () => pipelineService.restore(userKey, removed) }
+            : undefined,
+        });
+      } else {
+        toast(`${snapshot.name} passed.`);
+      }
+    } else if (userKey) {
+      const { previous } = pipelineService.upsert(userKey, decision, snapshot);
+      toast.success(
+        decision === "shortlist"
+          ? `${snapshot.name} added to your Shortlist.`
+          : `${snapshot.name} added to Monitoring.`,
+        {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              if (previous) pipelineService.upsert(userKey, previous.status, previous.snapshot);
+              else pipelineService.remove(userKey, founderId);
+            },
+          },
+        },
+      );
+      // Legacy watchlist mirror — kept until CTO wires backend.
+      if (typeof window !== "undefined") {
         const list: string[] = JSON.parse(window.localStorage.getItem(WATCHLIST_KEY) || "[]");
         if (!list.includes(founderId)) {
           list.push(founderId);
@@ -187,6 +265,7 @@ function TodayDeck() {
         }
       }
     }
+
     setExiting(decision);
 
     if (thesis) {
@@ -195,8 +274,8 @@ function TodayDeck() {
       saveThesis(updated);
       setThesis(updated);
       if (nextCount === 5) {
-        setToast("Nice — your match model just got sharper.");
-        setTimeout(() => setToast(null), 3500);
+        setThesisToast("Nice — your match model just got sharper.");
+        setTimeout(() => setThesisToast(null), 3500);
       }
     }
 
@@ -583,10 +662,10 @@ function TodayDeck() {
         </aside>
       </div>
 
-      {toast && (
+      {thesisToast && (
         <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-full border border-mint/30 bg-background/90 px-5 py-2.5 text-sm shadow-lg backdrop-blur">
           <Sparkles className="mr-2 inline h-3.5 w-3.5 text-mint" />
-          {toast}
+          {thesisToast}
         </div>
       )}
     </AppShell>
