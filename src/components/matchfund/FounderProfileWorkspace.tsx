@@ -62,7 +62,7 @@ export type FounderWorkspaceProps = {
   // Optional: a hook to invoke the crawl through the isolated service.
   // Provided in production; the demo route passes a mock implementation
   // so /demo works without live third-party APIs.
-  invokeCrawl?: Parameters<typeof runFounderCrawl>[1]["invoke"];
+  invokeCrawl?: Invoker;
   previewHref?: string;
 };
 
