@@ -1,10 +1,11 @@
 import { Link, useRouter, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bell, LogOut, Search, Target } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = { to: string; label: string };
+type Role = "investor" | "founder" | "admin";
 
 const NAV_INVESTOR: NavItem[] = [
   { to: "/investor/discover", label: "Discover" },
@@ -22,15 +23,31 @@ const NAV_ADMIN: NavItem[] = [
   { to: "/admin/discover", label: "Crawler" },
 ];
 
-function navForPath(pathname: string): { nav: NavItem[]; searchHint: string; home: string } {
+function navForPath(pathname: string): {
+  nav: NavItem[];
+  searchHint: string;
+  home: string;
+  role: Role;
+} {
   if (pathname.startsWith("/founder"))
-    return { nav: NAV_FOUNDER, searchHint: "Search grants & programs", home: "/founder/profile" };
+    return {
+      nav: NAV_FOUNDER,
+      searchHint: "Search grants & programs",
+      home: "/founder/profile",
+      role: "founder",
+    };
   if (pathname.startsWith("/admin"))
-    return { nav: NAV_ADMIN, searchHint: "Search operators", home: "/admin" };
+    return {
+      nav: NAV_ADMIN,
+      searchHint: "Search operators",
+      home: "/admin",
+      role: "admin",
+    };
   return {
     nav: NAV_INVESTOR,
     searchHint: "Search founders, companies, keywords",
     home: "/investor/discover",
+    role: "investor",
   };
 }
 
