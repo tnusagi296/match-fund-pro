@@ -21,6 +21,7 @@ import { Route as CompanyIdRouteImport } from './routes/company.$id'
 import { Route as AuthenticatedInvestorRouteImport } from './routes/_authenticated.investor'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AuthenticatedInvestorIndexRouteImport } from './routes/_authenticated.investor.index'
 import { Route as AuthenticatedInvestorSettingsRouteImport } from './routes/_authenticated.investor.settings'
 import { Route as AuthenticatedInvestorDiscoverRouteImport } from './routes/_authenticated.investor.discover'
 import { Route as AuthenticatedFounderGrantsRouteImport } from './routes/_authenticated.founder.grants'
@@ -89,6 +90,12 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedInvestorIndexRoute =
+  AuthenticatedInvestorIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedInvestorRoute,
+  } as any)
 const AuthenticatedInvestorSettingsRoute =
   AuthenticatedInvestorSettingsRouteImport.update({
     id: '/settings',
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/investor/': typeof AuthenticatedInvestorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedRouteWithChildren
@@ -154,7 +162,6 @@ export interface FileRoutesByTo {
   '/watchlist': typeof WatchlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/investor': typeof AuthenticatedInvestorRouteWithChildren
   '/company/$id': typeof CompanyIdRoute
   '/founder/$id': typeof FounderIdRoute
   '/idea/$id': typeof IdeaIdRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/investor': typeof AuthenticatedInvestorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/founder/grants': typeof AuthenticatedFounderGrantsRoute
   '/_authenticated/investor/discover': typeof AuthenticatedInvestorDiscoverRoute
   '/_authenticated/investor/settings': typeof AuthenticatedInvestorSettingsRoute
+  '/_authenticated/investor/': typeof AuthenticatedInvestorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/founder/grants'
     | '/investor/discover'
     | '/investor/settings'
+    | '/investor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -217,7 +227,6 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/investor'
     | '/company/$id'
     | '/founder/$id'
     | '/idea/$id'
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/founder/grants'
     | '/investor/discover'
     | '/investor/settings'
+    | '/investor'
   id:
     | '__root__'
     | '/_authenticated'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/founder/grants'
     | '/_authenticated/investor/discover'
     | '/_authenticated/investor/settings'
+    | '/_authenticated/investor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -351,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/investor/': {
+      id: '/_authenticated/investor/'
+      path: '/'
+      fullPath: '/investor/'
+      preLoaderRoute: typeof AuthenticatedInvestorIndexRouteImport
+      parentRoute: typeof AuthenticatedInvestorRoute
+    }
     '/_authenticated/investor/settings': {
       id: '/_authenticated/investor/settings'
       path: '/settings'
@@ -399,11 +417,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedInvestorRouteChildren {
   AuthenticatedInvestorDiscoverRoute: typeof AuthenticatedInvestorDiscoverRoute
   AuthenticatedInvestorSettingsRoute: typeof AuthenticatedInvestorSettingsRoute
+  AuthenticatedInvestorIndexRoute: typeof AuthenticatedInvestorIndexRoute
 }
 
 const AuthenticatedInvestorRouteChildren: AuthenticatedInvestorRouteChildren = {
   AuthenticatedInvestorDiscoverRoute: AuthenticatedInvestorDiscoverRoute,
   AuthenticatedInvestorSettingsRoute: AuthenticatedInvestorSettingsRoute,
+  AuthenticatedInvestorIndexRoute: AuthenticatedInvestorIndexRoute,
 }
 
 const AuthenticatedInvestorRouteWithChildren =
