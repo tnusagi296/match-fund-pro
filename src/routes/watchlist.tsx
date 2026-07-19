@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Building2, Sparkles, TrendingUp, Users2 } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/matchfund/AppShell";
 import { founders, type Founder } from "@/data/matchfund";
 import { computeMatch, useThesis } from "@/lib/thesis";
@@ -8,7 +9,7 @@ import { computeMatch, useThesis } from "@/lib/thesis";
 const WATCHLIST_KEY = "matchfund:watchlist";
 
 export const Route = createFileRoute("/watchlist")({
-  head: () => ({ meta: [{ title: "Saved — Match Fund" }] }),
+  head: () => ({ meta: [{ title: "Shortlist — MatchFund" }] }),
   component: WatchlistPage,
 });
 
