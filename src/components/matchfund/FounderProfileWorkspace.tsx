@@ -36,7 +36,7 @@ import {
 } from "@/lib/founder-profile";
 import { PROVENANCE_COPY, type Provenance } from "@/lib/founder-metrics";
 import { validateIdentityLinks, type GithubResult } from "@/lib/identity";
-import { runFounderCrawl, CrawlError } from "@/services/crawlService";
+import { runFounderCrawl, CrawlError, type Invoker } from "@/services/crawlService";
 
 type CrawlState =
   | { kind: "idle" }
