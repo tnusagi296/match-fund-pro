@@ -75,7 +75,23 @@ function TodayDeck() {
   }, [graphFeedFn, hydrated]);
 
   const ranked = useMemo<RankedDiscovery[]>(() => {
-    if (!thesis || graphError) return [];
+    // In demo mode (or when there's no thesis but user asked for demo), fall
+    // back to a permissive default so the rank still works and demo founders
+    // always render.
+    const effectiveThesis = thesis ?? {
+      stages: [],
+      sectors: [],
+      weights: { technical: 34, traction: 33, fmf: 33 },
+      geos: [],
+      checkMin: 25,
+      checkMax: 250,
+      digestEmail: false,
+    };
+    if (!thesis && !demoMode) return [];
+    if (graphError && !demoMode) {
+      // Even on error, if user opted into demo, show demo results.
+      return [];
+    }
     const graphRanked = rankGraphFounders(graphFounders, thesis);
     const demoRanked = rankFounders(founders, thesis).map(({ founder, match }) => ({
       kind: "demo" as const,
