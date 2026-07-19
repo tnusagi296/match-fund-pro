@@ -1,18 +1,26 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Sparkles, Target } from "lucide-react";
 import {
   DEFAULT_THESIS,
   GEO_OPTIONS,
   SECTOR_OPTIONS,
   STAGE_OPTIONS,
+  loadThesis,
   saveThesis,
   type Thesis,
 } from "@/lib/thesis";
-import type { Sector, Stage } from "@/data/matchfund";
+import type { Sector } from "@/data/matchfund";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  return: z.enum(["settings"]).optional(),
+});
 
 export const Route = createFileRoute("/onboard")({
-  head: () => ({ meta: [{ title: "Set your thesis — Match Fund" }] }),
+  validateSearch: (s) => searchSchema.parse(s),
+  head: () => ({ meta: [{ title: "Investment thesis — MatchFund" }] }),
   component: OnboardPage,
 });
 
@@ -20,15 +28,34 @@ const STEPS = ["Stage", "Sectors", "Signals", "Range"] as const;
 
 function OnboardPage() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/onboard" });
+  const isEditing = search.return === "settings";
   const [step, setStep] = useState(0);
   const [thesis, setThesis] = useState<Thesis>(DEFAULT_THESIS);
+
+  // Preload the existing thesis so edits don't reset selections.
+  useEffect(() => {
+    const existing = loadThesis();
+    if (existing) setThesis(existing);
+  }, []);
 
   const toggle = <T,>(arr: T[], v: T): T[] =>
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   const finish = () => {
-    saveThesis({ ...thesis, seenCoachMark: false, swipeCount: 0 });
-    navigate({ to: "/" });
+    // Preserve counters and coach-mark state on edit; only reset on first setup.
+    const existing = loadThesis();
+    saveThesis({
+      ...thesis,
+      seenCoachMark: existing?.seenCoachMark ?? false,
+      swipeCount: existing?.swipeCount ?? 0,
+    });
+    if (isEditing) {
+      toast.success("Your investment thesis has been updated.");
+      navigate({ to: "/settings" });
+    } else {
+      navigate({ to: "/" });
+    }
   };
 
   const canAdvance =
