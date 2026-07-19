@@ -114,6 +114,7 @@ function OnboardPage() {
                 <AlertTriangle className="h-3 w-3" /> Draft not synced
               </span>
             )}
+          </div>
         </div>
       </header>
 
