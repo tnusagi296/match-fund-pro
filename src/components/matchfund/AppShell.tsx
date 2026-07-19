@@ -2,13 +2,12 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { Bell, Search, Target, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
-// Trimmed to the Hooked loop: Today (Action + Reward), Saved (Investment record),
-// Thesis (Investment input). Everything else is reached from a card.
+// Investor-facing nav. Thesis lives inside Settings; the crawler is admin-only
+// and reached directly at /admin/discover — it isn't shown here.
 const NAV_INVESTOR = [
   { to: "/", label: "Discover" },
   { to: "/watchlist", label: "Shortlist" },
-  { to: "/onboard", label: "Thesis" },
-  { to: "/admin/discover", label: "Crawl" },
+  { to: "/settings", label: "Settings" },
 ];
 const NAV_FOUNDER = [
   { to: "/me", label: "Claim / enrich" },

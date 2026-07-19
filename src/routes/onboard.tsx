@@ -1,18 +1,26 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Search, Target } from "lucide-react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { ArrowLeft, ArrowRight, Check, Search, Sparkles, Target } from "lucide-react";
 import {
   DEFAULT_THESIS,
   GEO_OPTIONS,
   SECTOR_OPTIONS,
   STAGE_OPTIONS,
+  loadThesis,
   saveThesis,
   type Thesis,
 } from "@/lib/thesis";
-import type { Sector, Stage } from "@/data/matchfund";
+import type { Sector } from "@/data/matchfund";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  return: z.enum(["settings"]).optional(),
+});
 
 export const Route = createFileRoute("/onboard")({
-  head: () => ({ meta: [{ title: "Set your thesis — Match Fund" }] }),
+  validateSearch: (s) => searchSchema.parse(s),
+  head: () => ({ meta: [{ title: "Investment thesis — MatchFund" }] }),
   component: OnboardPage,
 });
 
@@ -20,16 +28,35 @@ const STEPS = ["Stage", "Sectors", "Signals", "Range"] as const;
 
 function OnboardPage() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/onboard" });
+  const isEditing = search.return === "settings";
   const [step, setStep] = useState(0);
   const [thesis, setThesis] = useState<Thesis>(DEFAULT_THESIS);
+
+  // Preload the existing thesis so edits don't reset selections.
+  useEffect(() => {
+    const existing = loadThesis();
+    if (existing) setThesis(existing);
+  }, []);
 
   const toggle = <T,>(arr: T[], v: T): T[] =>
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   const finish = () => {
-    saveThesis({ ...thesis, seenCoachMark: false, swipeCount: 0 });
-    window.sessionStorage.setItem("matchfund:discovery-autostart", "true");
-    navigate({ to: "/" });
+    // Preserve counters and coach-mark state on edit; only reset on first setup.
+    const existing = loadThesis();
+    saveThesis({
+      ...thesis,
+      seenCoachMark: existing?.seenCoachMark ?? false,
+      swipeCount: existing?.swipeCount ?? 0,
+    });
+    if (isEditing) {
+      toast.success("Your investment thesis has been updated.");
+      navigate({ to: "/settings" });
+    } else {
+      window.sessionStorage.setItem("matchfund:discovery-autostart", "true");
+      navigate({ to: "/" });
+    }
   };
 
   const canAdvance =
@@ -45,7 +72,7 @@ function OnboardPage() {
           <div className="grid h-9 w-9 place-items-center rounded-2xl border border-mint/30 bg-mint-soft ring-glow">
             <Target className="h-4 w-4 text-mint" strokeWidth={2.5} />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight">Match Fund</span>
+          <span className="text-[15px] font-semibold tracking-tight">MatchFund</span>
           <div className="ml-auto flex items-center gap-2">
             {STEPS.map((_, i) => (
               <span
@@ -61,7 +88,7 @@ function OnboardPage() {
 
       <main className="mx-auto max-w-2xl px-6 py-14">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
-          Onboarding · step {step + 1} of {STEPS.length}
+          {isEditing ? "Edit thesis · " : "Onboarding · "}Step {step + 1} of {STEPS.length}
         </div>
 
         {step === 0 && (
@@ -263,7 +290,15 @@ function OnboardPage() {
               onClick={finish}
               className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2 text-sm font-medium text-primary-foreground shadow-[0_0_28px_var(--mint-soft)]"
             >
-              <Search className="h-3.5 w-3.5" /> Find founders
+              {isEditing ? (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" /> Save investment thesis
+                </>
+              ) : (
+                <>
+                  <Search className="h-3.5 w-3.5" /> Find founders
+                </>
+              )}
             </button>
           )}
         </div>

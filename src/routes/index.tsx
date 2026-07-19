@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -45,7 +45,6 @@ const WATCHLIST_KEY = "matchfund:watchlist";
 const DECISIONS_KEY = "mf.decisions";
 
 function TodayDeck() {
-  const navigate = useNavigate();
   const [thesis, setThesis, hydrated] = useThesis();
   const graphFeedFn = useServerFn(getPublishedGraphFounders);
   const previewDiscoveryFn = useServerFn(previewDiscoveryPlan);
@@ -59,9 +58,9 @@ function TodayDeck() {
   const [discoveryError, setDiscoveryError] = useState<string | null>(null);
   const discoveryAutostarted = useRef(false);
 
-  useEffect(() => {
-    if (hydrated && !thesis) navigate({ to: "/onboard" });
-  }, [hydrated, thesis, navigate]);
+  // Do NOT auto-redirect. Show a proper "missing thesis" state so investors
+  // can also try demo matches without setting a thesis first.
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -121,9 +120,25 @@ function TodayDeck() {
   }, [hydrated, runDiscovery, thesis]);
 
   const ranked = useMemo<RankedDiscovery[]>(() => {
-    if (!thesis || graphError) return [];
-    const graphRanked = rankGraphFounders(graphFounders, thesis);
-    const demoRanked = rankFounders(founders, thesis).map(({ founder, match }) => ({
+    // In demo mode (or when there's no thesis but user asked for demo), fall
+    // back to a permissive default so the rank still works and demo founders
+    // always render.
+    const effectiveThesis = thesis ?? {
+      stages: [],
+      sectors: [],
+      weights: { technical: 34, traction: 33, fmf: 33 },
+      geos: [],
+      checkMin: 25,
+      checkMax: 250,
+      digestEmail: false,
+    };
+    if (!thesis && !demoMode) return [];
+    if (graphError && !demoMode) {
+      // Even on error, if user opted into demo, show demo results.
+      return [];
+    }
+    const graphRanked = rankGraphFounders(graphFounders, effectiveThesis);
+    const demoRanked = rankFounders(founders, effectiveThesis).map(({ founder, match }) => ({
       kind: "demo" as const,
       founder,
       match,
@@ -133,7 +148,7 @@ function TodayDeck() {
     return selection.mode === "graph"
       ? selection.records.map((r) => ({ kind: "graph" as const, ...r }))
       : selection.records;
-  }, [graphError, graphFounders, thesis]);
+  }, [graphError, graphFounders, thesis, demoMode]);
 
   // Data mode: live if there are any graph records, demo if only demo,
   // mixed if the feed contains both kinds.
@@ -212,21 +227,82 @@ function TodayDeck() {
     };
   }, [decisions]);
 
-  if (!hydrated || !thesis) {
+  // 1) Still hydrating localStorage — skeleton, not a blocker.
+  if (!hydrated) {
     return (
       <AppShell>
-        <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
-          Loading your thesis…
+        <DiscoverSkeleton message="Loading your workspace…" />
+      </AppShell>
+    );
+  }
+
+  // 2) No thesis yet, and user hasn't opted into demo — friendly onboarding CTA.
+  if (!thesis && !demoMode) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-2xl py-16 text-center">
+          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">
+            Discover
+          </div>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">
+            Discover exceptional founders before they start fundraising.
+          </h1>
+          <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground">
+            MatchFund turns public builder signals into thesis-matched founder opportunities for
+            early-stage investors.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/onboard"
+              className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Set up investment thesis
+            </Link>
+            <button
+              onClick={() => setDemoMode(true)}
+              className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Explore demo matches
+            </button>
+          </div>
         </div>
       </AppShell>
     );
   }
 
+  // 3) Fetching graph feed — skeleton.
   if (graphLoading) {
     return (
       <AppShell>
-        <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
-          Loading discoverable founder evidence…
+        <DiscoverSkeleton message="Finding builders that match your investment thesis…" />
+      </AppShell>
+    );
+  }
+
+  // 4) Error — with retry + demo fallback.
+  if (graphError && !demoMode) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-lg py-16 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-rose-400" />
+          <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight">
+            We couldn't load your founder matches.
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">{graphError}</p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-mint px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => setDemoMode(true)}
+              className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Explore demo matches
+            </button>
+          </div>
         </div>
       </AppShell>
     );
@@ -261,25 +337,37 @@ function TodayDeck() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void runDiscovery()}
-            disabled={discoveryRunning}
-            className="inline-flex items-center gap-1.5 rounded-full bg-mint px-3.5 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
-          >
-            {discoveryRunning ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Search className="h-3.5 w-3.5" />
-            )}
-            {discoveryRunning ? "Finding founders…" : "Find founders"}
-          </button>
-          <Link
-            to="/onboard"
-            className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <Target className="h-3.5 w-3.5" /> Edit thesis
-          </Link>
+          {thesis ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void runDiscovery()}
+                disabled={discoveryRunning}
+                className="inline-flex items-center gap-1.5 rounded-full bg-mint px-3.5 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              >
+                {discoveryRunning ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Search className="h-3.5 w-3.5" />
+                )}
+                {discoveryRunning ? "Finding founders…" : "Find founders"}
+              </button>
+              <Link
+                to="/onboard"
+                search={{ return: "settings" as const }}
+                className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <Target className="h-3.5 w-3.5" /> Edit thesis
+              </Link>
+            </>
+          ) : (
+            <Link
+              to="/onboard"
+              className="inline-flex items-center gap-1.5 rounded-full bg-mint px-3.5 py-2 text-xs font-medium text-primary-foreground"
+            >
+              <Search className="h-3.5 w-3.5" /> Set thesis & find founders
+            </Link>
+          )}
         </div>
       </div>
 
@@ -298,19 +386,28 @@ function TodayDeck() {
             Demo fallback · no discoverable graph-backed founders were found. Every card below is a
             Demo profile and does not represent a live crawl.
           </span>
-          <button
-            type="button"
-            onClick={() => void runDiscovery()}
-            disabled={discoveryRunning}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber/40 bg-background/40 px-3 py-1.5 font-medium disabled:opacity-50"
-          >
-            {discoveryRunning ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Search className="h-3.5 w-3.5" />
-            )}
-            {discoveryRunning ? "Scanning…" : "Find founders"}
-          </button>
+          {thesis ? (
+            <button
+              type="button"
+              onClick={() => void runDiscovery()}
+              disabled={discoveryRunning}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber/40 bg-background/40 px-3 py-1.5 font-medium disabled:opacity-50"
+            >
+              {discoveryRunning ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Search className="h-3.5 w-3.5" />
+              )}
+              {discoveryRunning ? "Scanning…" : "Find founders"}
+            </button>
+          ) : (
+            <Link
+              to="/onboard"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber/40 bg-background/40 px-3 py-1.5 font-medium"
+            >
+              <Search className="h-3.5 w-3.5" /> Set thesis & find founders
+            </Link>
+          )}
         </div>
       )}
 
@@ -332,15 +429,19 @@ function TodayDeck() {
               Current thesis
             </div>
             <div className="mt-3 space-y-2 text-xs">
-              <ThesisRow label="Stage" values={thesis.stages} />
-              <ThesisRow label="Sector" values={thesis.sectors} />
-              <ThesisRow label="Geography" values={thesis.geos.length ? thesis.geos : ["Global"]} />
+              <ThesisRow label="Stage" values={thesis?.stages ?? ["Demo mode"]} />
+              <ThesisRow label="Sector" values={thesis?.sectors ?? ["All sectors"]} />
+              <ThesisRow
+                label="Geography"
+                values={thesis?.geos?.length ? thesis.geos : ["Global"]}
+              />
             </div>
             <Link
-              to="/onboard"
+              to={thesis ? "/onboard" : "/onboard"}
+              search={thesis ? { return: "settings" as const } : undefined}
               className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-lg border border-border/60 bg-elevated/50 py-1.5 text-[11px] font-medium text-mint hover:border-mint/40"
             >
-              Edit thesis
+              {thesis ? "Edit thesis" : "Set up thesis"}
             </Link>
           </div>
 
@@ -1035,3 +1136,18 @@ function formatShortDate(value: string | null): string {
 }
 
 // silence unused import warning if lint complains
+
+function DiscoverSkeleton({ message }: { message: string }) {
+  return (
+    <div className="py-10">
+      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-mint">Discover</div>
+      <div className="mt-2 h-8 w-2/3 animate-pulse rounded-lg bg-white/5" />
+      <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+      <div className="mt-6 grid grid-cols-[240px_minmax(0,1fr)_280px] gap-5">
+        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
+        <div className="h-[520px] animate-pulse rounded-2xl bg-white/5" />
+        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
+      </div>
+    </div>
+  );
+}
