@@ -109,8 +109,16 @@ function GrantsPage() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-semibold tabular text-mint">{g.matchScore}</div>
-                <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Fit</div>
+                {profileState === "personalized" ? (
+                  <>
+                    <div className="text-lg font-semibold tabular text-mint">{g.matchScore}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Fit</div>
+                  </>
+                ) : (
+                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Publish profile<br />for FIT
+                  </div>
+                )}
               </div>
             </div>
 
