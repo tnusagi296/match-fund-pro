@@ -294,6 +294,7 @@ function TodayDeck() {
         </div>
         <Link
           to="/onboard"
+          search={{ return: "settings" as const }}
           className="inline-flex items-center gap-1.5 rounded-full glass-subtle px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground"
         >
           <Target className="h-3.5 w-3.5" /> Edit thesis
