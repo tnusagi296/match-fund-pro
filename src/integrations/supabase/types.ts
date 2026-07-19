@@ -386,6 +386,54 @@ export type Database = {
           },
         ]
       }
+      graph_entity_resolution_candidates: {
+        Row: {
+          created_at: string
+          id: string
+          identifiers_json: Json
+          left_entity_id: string
+          reason: string
+          right_entity_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifiers_json?: Json
+          left_entity_id: string
+          reason: string
+          right_entity_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifiers_json?: Json
+          left_entity_id?: string
+          reason?: string
+          right_entity_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_entity_resolution_candidates_left_entity_id_fkey"
+            columns: ["left_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_entity_resolution_candidates_right_entity_id_fkey"
+            columns: ["right_entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       graph_evidence: {
         Row: {
           content_hash: string
@@ -693,8 +741,18 @@ export type Database = {
       claim_request_status: "pending" | "approved" | "rejected"
       claim_verification_method: "email" | "github" | "website" | "manual"
       investor_action_status: "monitoring" | "shortlisted" | "passed"
-      profile_claim_status: "unclaimed" | "pending" | "claimed" | "rejected"
-      profile_source_origin: "crawler" | "self_created"
+      profile_claim_status:
+        | "unclaimed"
+        | "pending"
+        | "claimed"
+        | "rejected"
+        | "self_submitted"
+      profile_source_origin:
+        | "crawler"
+        | "self_created"
+        | "public_scan"
+        | "founder_submission"
+        | "demo"
       profile_verification_status: "unverified" | "pending" | "verified"
       profile_visibility_state: "private" | "discoverable" | "published"
     }
@@ -828,8 +886,20 @@ export const Constants = {
       claim_request_status: ["pending", "approved", "rejected"],
       claim_verification_method: ["email", "github", "website", "manual"],
       investor_action_status: ["monitoring", "shortlisted", "passed"],
-      profile_claim_status: ["unclaimed", "pending", "claimed", "rejected"],
-      profile_source_origin: ["crawler", "self_created"],
+      profile_claim_status: [
+        "unclaimed",
+        "pending",
+        "claimed",
+        "rejected",
+        "self_submitted",
+      ],
+      profile_source_origin: [
+        "crawler",
+        "self_created",
+        "public_scan",
+        "founder_submission",
+        "demo",
+      ],
       profile_verification_status: ["unverified", "pending", "verified"],
       profile_visibility_state: ["private", "discoverable", "published"],
     },
