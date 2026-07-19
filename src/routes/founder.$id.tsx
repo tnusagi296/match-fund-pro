@@ -658,7 +658,7 @@ function IdeaTab({
   company,
 }: {
   founder: Founder;
-  company: ReturnType<typeof companyById>;
+  company: ReturnType<typeof companyById> | undefined;
 }) {
   const problem = company?.description ?? founder.matchReason;
   const solution = company?.tagline ?? founder.headline;
@@ -756,7 +756,7 @@ function TractionTab({
   company,
 }: {
   founder: Founder;
-  company: ReturnType<typeof companyById>;
+  company: ReturnType<typeof companyById> | undefined;
 }) {
   const hasPitchDeck = false;
   return (
